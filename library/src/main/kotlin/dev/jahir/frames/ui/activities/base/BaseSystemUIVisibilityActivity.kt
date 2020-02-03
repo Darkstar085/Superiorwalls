@@ -22,17 +22,6 @@ abstract class BaseSystemUIVisibilityActivity<out P : Prefs> : BaseWallpaperFetc
 
     private var visibleSystemUI: Boolean = true
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putBoolean(VISIBLE_SYSTEM_UI_KEY, visibleSystemUI)
-    }
-
-    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        super.onRestoreInstanceState(savedInstanceState)
-        if (!canToggleSystemUIVisibility()) return
-        setSystemUIVisibility(savedInstanceState.getBoolean(VISIBLE_SYSTEM_UI_KEY, true))
-    }
-
     internal fun toggleSystemUI() {
         if (!canToggleSystemUIVisibility()) return
         setSystemUIVisibility(!visibleSystemUI)

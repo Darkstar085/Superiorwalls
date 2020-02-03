@@ -6,35 +6,35 @@
     <color name="white">#fff</color>
     <color name="black">#000</color>
     <color name="transparent">#00000000</color>
-    <color name="viewer_bars_colors">#80000000</color>
+    <color name="viewer_bars_colors">#00000000</color>
     <color name="dividers">#1f000000</color>
 
     <!-- Light Theme Colors -->
 
     <color name="primary">#ffffff</color>
-    <color name="primaryDark">#fafafa</color>
+    <color name="primaryDark">#ffffff</color>
     <color name="onPrimary">#de000000</color>
 
-    <color name="accent">#3881fa</color>
+    <color name="accent">@*android:color/accent_device_default_light</color>
     <color name="onAccent">#ffffff</color>
 
     <color name="surface">#ffffff</color>
     <color name="onSurface">#de000000</color>
     <color name="onSurfaceVariant">#8a000000</color>
 
-    <color name="background">#fafafa</color>
+    <color name="background">#ffffff</color>
     <color name="onBackground">#de000000</color>
 
     <!-- Dark Theme Colors -->
 
-    <color name="darkThemePrimary">#212121</color>
+    <color name="darkThemePrimary">#000000</color>
     <color name="darkThemePrimaryDark">#000000</color>
     <color name="darkThemeOnPrimary">#ffffff</color>
 
-    <color name="darkThemeAccent">#ff3f80</color>
-    <color name="darkThemeOnAccent">#ffffff</color>
+    <color name="darkThemeAccent">@*android:color/accent_device_default_dark</color>
+    <color name="darkThemeOnAccent">#de000000</color>
 
-    <color name="darkThemeSurface">#424242</color>
+    <color name="darkThemeSurface">#212121</color>
     <color name="darkThemeOnSurface">#ffffff</color>
     <color name="darkThemeOnSurfaceVariant">#b3ffffff</color>
 

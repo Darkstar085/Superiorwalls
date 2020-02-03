@@ -11,7 +11,7 @@
             android:summary="@string/follow_system_theme"
             android:title="@string/app_theme" />
 
-        <androidx.preference.SwitchPreference
+        <!--<androidx.preference.SwitchPreference
             android:key="use_amoled"
             android:summary="@string/use_amoled_theme_summary"
             android:title="@string/use_amoled_theme" />
@@ -19,6 +19,7 @@
         <androidx.preference.SwitchPreference
             android:key="colored_navigation_bar"
             android:title="@string/colored_navigation_bar" />
+            -->
 
         <androidx.preference.SwitchPreference
             android:key="interface_animations"
@@ -31,35 +32,43 @@
         android:key="data_prefs"
         android:title="@string/data_and_storage">
 
-        <androidx.preference.SwitchPreference
+        <!--<androidx.preference.SwitchPreference
             android:key="full_res_previews"
             android:summary="@string/display_full_res_previews_summary"
             android:title="@string/display_full_res_previews" />
-
-        <androidx.preference.SwitchPreference
-            android:key="crop_pictures"
-            android:summary="@string/crop_pictures_summary"
-            android:title="@string/crop_pictures" />
-
-        <androidx.preference.Preference
-            android:key="download_location"
-            android:summary="@string/download_location_summary"
-            android:title="@string/download_location" />
+            -->
 
         <androidx.preference.Preference
             android:key="clear_data_cache"
             android:summary="@string/clear_data_cache_summary"
             android:title="@string/clear_data_cache" />
 
+        <androidx.preference.Preference
+        android:key="download_location"
+        android:summary="@string/download_location_summary"
+        android:title="@string/download_location"
+        android:selectable="false" />
+
+
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory
-        android:key="notifications_prefs"
-        android:title="@string/notifications">
+        android:key="credits"
+        android:title="@string/credits">
 
-        <androidx.preference.SwitchPreference
-            android:key="notifications"
-            android:title="@string/enable_notifications" />
+        <androidx.preference.Preference
+            android:title="Jahir Fiquitiva"
+            android:summary="Frames Dashboard Developer">
+            <intent android:action="android.intent.action.VIEW"
+                android:data="https://github.com/jahirfiquitiva/" />
+        </androidx.preference.Preference>
+
+        <androidx.preference.Preference
+            android:title="Sipun Ku Mahanta"
+            android:summary="Superiorwalls">
+            <intent android:action="android.intent.action.VIEW"
+                android:data="https://github.com/Darkstar085/" />
+        </androidx.preference.Preference>
 
     </androidx.preference.PreferenceCategory>
 

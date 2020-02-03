@@ -80,9 +80,8 @@ abstract class FramesActivity : BaseBillingActivity<Prefs>() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.about -> startActivity(Intent(this, AboutActivity::class.java))
             R.id.settings -> startActivity(Intent(this, SettingsActivity::class.java))
-            R.id.donate -> showInAppPurchasesDialog()
+           /**R.id.donate -> launchDonationsFlow()**/
         }
         return super.onOptionsItemSelected(item)
     }

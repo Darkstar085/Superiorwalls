@@ -55,6 +55,7 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="@style/TextAppearance.Frames.ToolbarTitle.Viewer"
                     android:textColor="@color/white"
+                    android:textStyle="bold"
                     tools:text="Title" />
 
                 <TextView

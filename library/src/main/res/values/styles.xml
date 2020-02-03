@@ -2,7 +2,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="BaseFramesSplashScreenTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar" tools:ignore="NewApi">
-        <item name="android:windowBackground">@drawable/splash_screen</item>
 
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primaryDark</item>
@@ -26,6 +25,7 @@
         <item name="android:windowActivityTransitions">true</item>
         <item name="android:navigationBarColor">?colorSurface</item>
         <item name="android:navigationBarDividerColor">@color/transparent</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 
     <style name="BaseFramesSplashScreenTheme.Amoled" parent="BaseFramesSplashScreenTheme" tools:ignore="NewApi" />
@@ -57,6 +57,7 @@
         <item name="bottomSheetDialogTheme">@style/Frames.BottomSheetDialog</item>
         <item name="navigationViewStyle">@style/Widget.Frames.NavigationView</item>
         <item name="toolbarStyle">@style/Widget.MaterialComponents.Toolbar.PrimarySurface</item>
+        <item name="appBarLayoutStyle">@style/NoElevationAppBarLayout</item>
 
         <item name="shapeAppearanceSmallComponent">
             @style/ShapeAppearance.Frames.SmallComponent
@@ -119,4 +120,7 @@
         <item name="android:textColor">?colorOnSurface</item>
     </style>
 
+    <style name="NoElevationAppBarLayout" parent="Widget.MaterialComponents.AppBarLayout.Primary">
+        <item name="elevation">0dp</item>
+    </style>
 </resources>

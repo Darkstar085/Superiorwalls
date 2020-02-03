@@ -2,7 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="wallpapers">Wallpapers</string>
     <string name="collections">Collections</string>
-    <string name="favorites">Favorites</string>
+    <string name="favorites">Favorite</string>
     <string name="all">All</string>
 
     <string name="loading">Loading…</string>
@@ -113,11 +113,11 @@
     <string name="crop_pictures">Scale when applying</string>
     <string name="crop_pictures_summary">Scale image to match the device\'s resolution</string>
     <string name="download_location">Download location</string>
-    <string name="download_location_summary">Currently storing wallpapers in:</string>
+    <string name="download_location_summary">Wallpapers will be saved in:</string>
     <string name="clear_data_cache">Clear app data and cache</string>
     <string name="clear_data_cache_summary">Current cache size: %1$s</string>
 
-    <string name="notifications">Notifications</string>
+    <string name="credits">Credits</string>
     <string name="enable_notifications">Enable notifications</string>
 
     <string name="legal">Legal</string>

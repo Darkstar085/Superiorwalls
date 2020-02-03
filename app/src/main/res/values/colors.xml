@@ -12,34 +12,34 @@
     <!-- Light Theme Colors -->
 
     <color name="primary">#ffffff</color>
-    <color name="primaryDark">#fafafa</color>
+    <color name="primaryDark">#ffffff</color>
     <color name="onPrimary">#de000000</color>
 
-    <color name="accent">#3881fa</color>
+    <color name="accent">@*android:color/accent_device_default_light</color>
     <color name="onAccent">#ffffff</color>
 
     <color name="surface">#ffffff</color>
     <color name="onSurface">#de000000</color>
     <color name="onSurfaceVariant">#8a000000</color>
 
-    <color name="background">#fafafa</color>
+    <color name="background">#ffffff</color>
     <color name="onBackground">#de000000</color>
 
     <!-- Dark Theme Colors -->
 
-    <color name="darkThemePrimary">#212121</color>
+    <color name="darkThemePrimary">#000000</color>
     <color name="darkThemePrimaryDark">#000000</color>
     <color name="darkThemeOnPrimary">#ffffff</color>
 
-    <color name="darkThemeAccent">#ff3f80</color>
-    <color name="darkThemeOnAccent">#ffffff</color>
+    <color name="darkThemeAccent">@*android:color/accent_device_default_dark</color>
+    <color name="darkThemeOnAccent">#de000000</color>
 
-    <color name="darkThemeSurface">#424242</color>
+    <color name="darkThemeSurface">#000000</color>
     <color name="darkThemeOnSurface">#ffffff</color>
-    <color name="darkThemeOnSurfaceVariant">#b3ffffff</color>
+    <color name="darkThemeOnSurfaceVariant">#000000</color>
 
-    <color name="darkThemeBackground">#303030</color>
-    <color name="darkThemeOnBackground">#b3ffffff</color>
+    <color name="darkThemeBackground">#000000</color>
+    <color name="darkThemeOnBackground">#000000</color>
 
     <!-- Amoled Theme Colors -->
 
@@ -47,12 +47,12 @@
     <color name="amoledThemePrimaryDark">#000000</color>
     <color name="amoledThemeOnPrimary">#ffffff</color>
 
-    <color name="amoledThemeAccent">#64ffda</color>
-    <color name="amoledThemeOnAccent">#de000000</color>
+    <color name="amoledThemeAccent">#0060ff</color>
+    <color name="amoledThemeOnAccent">#000000</color>
 
-    <color name="amoledThemeSurface">#212121</color>
+    <color name="amoledThemeSurface">#000000</color>
     <color name="amoledThemeOnSurface">#ffffff</color>
-    <color name="amoledThemeBackground">#101010</color>
+    <color name="amoledThemeBackground">#000000</color>
 
     <color name="amoledThemeOnSurfaceVariant">@color/darkThemeOnSurfaceVariant</color>
     <color name="amoledThemeOnBackground">@color/darkThemeOnBackground</color>
