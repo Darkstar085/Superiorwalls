@@ -1,4 +1,4 @@
-package dev.jahir.frames.app
+package com.superior.superiorwalls
 
 import dev.jahir.frames.ui.FramesApplication
 
