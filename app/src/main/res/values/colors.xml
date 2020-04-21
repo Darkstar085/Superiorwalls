@@ -1,16 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <!-- Theme Independent Colors -->
-    <color name="wallpaper_overlay">#1a000000</color>
-    <color name="white">#fff</color>
-    <color name="black">#000</color>
-    <color name="transparent">#00000000</color>
-    <color name="viewer_bars_colors">#80000000</color>
-    <color name="dividers">#1f000000</color>
-
     <!-- Light Theme Colors -->
-
     <color name="primary">#ffffff</color>
     <color name="primaryDark">#ffffff</color>
     <color name="onPrimary">#de000000</color>
@@ -42,7 +32,6 @@
     <color name="darkThemeOnBackground">#000000</color>
 
     <!-- Amoled Theme Colors -->
-
     <color name="amoledThemePrimary">#000000</color>
     <color name="amoledThemePrimaryDark">#000000</color>
     <color name="amoledThemeOnPrimary">#ffffff</color>
