@@ -71,7 +71,7 @@ open class SettingsFragment : BasePreferenceFragment() {
         }
 
         val downloadLocationPref = findPreference<Preference?>("download_location")
-        downloadLocationPref?.summary = "${getPrefs().downloadsFolder}"
+        downloadLocationPref?.summary = ""
 
         val clearCachePref = findPreference<Preference?>("clear_data_cache")
         clearCachePref?.summary =
