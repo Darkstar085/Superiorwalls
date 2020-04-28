@@ -19,6 +19,7 @@ jobs:
         env:
           GH_REPO: "${{ github.repository }}"
           TG_BOT_KEY: "${{ secrets.TG_BOT_KEY }}"
+          TG_BOT_KEY: "${{ secrets.GH_TOKEN }}"
         name: Construction
         run: |
             curl -s -X POST "https://api.telegram.org/bot${TG_BOT_KEY}/sendMessage" -d chat_id="-1001474066247" \
@@ -48,6 +49,8 @@ jobs:
 
             git config --global user.name 'Bob The Builder'
             git config --global user.email 'bob@the.builder'
+            cd GitBuilds
+            git add *
             git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}"
             git commit -m "bot: build installables <$(echo $GITHUB_SHA | cut -c1-8)>"
             git push -u origin builds -f
