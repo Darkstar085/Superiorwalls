@@ -1,4 +1,4 @@
-name: Android CI
+name: "Bob The Builder"
 
 on:
   push:
@@ -6,14 +6,54 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-    - name: set up JDK 1.8
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
-    - name: Build with Gradle
-      run: ./gradlew build
+      -
+        uses: actions/checkout@v2
+      -
+        name: "Fetching Materials"
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      -
+        env:
+          GH_REPO: "${{ github.repository }}"
+          TG_BOT_KEY: "${{ secrets.TG_BOT_KEY }}"
+        name: Construction
+        run: |
+            curl -s -X POST "https://api.telegram.org/bot${TG_BOT_KEY}/sendMessage" -d chat_id="-1001474066247" \
+              -d "disable_web_page_preview=true" \
+              -d "parse_mode=markdown" \
+              -d text="🤖 building wi HEAD as [$(echo $GITHUB_SHA | cut -c1-8)](https://github.com/Sweeto143/Superiorwalls/commit/${GITHUB_SHA}) 🤖"
+            git clone -b builds --single-branch https://github.com/Sweeto143/Superiorwalls.git GitBuilds
+            cd GitBuilds
+            git reset --hard 6ec23f41b5379e9600a88ff29ff208f77bfe3ffb
+            git reflog expire --all --expire=now
+            git gc --prune=now --aggressive
+            cd ..
+            ./gradlew assembleDebug
+
+            if [ -d app/build/outputs/apk/release ]; then
+              if [ -n "$(ls -A app/build/outputs/apk/release)" ]; then
+                  cp app/build/outputs/apk/release/*.apk GitBuilds/SuperiorWalls-$(echo $GITHUB_SHA | cut -c1-8).apk
+                  cd GitBuilds
+                  curl --progress-bar -F document=@"SuperiorWalls-$(echo $GITHUB_SHA | cut -c1-8).apk" "https://api.telegram.org/bot${TG_BOT_KEY}/sendDocument" \
+                    -F chat_id="-1001415196670"  \
+                    -F "disable_web_page_preview=true" \
+                    -F "parse_mode=Markdown" \
+                    -F caption="$1"
+                  rm -rf app/build/outputs/apk
+              fi
+            fi
+
+            git config --global user.name 'Bob The Builder'
+            git config --global user.email 'bob@the.builder'
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}"
+            git commit -m "bot: build installables <$(echo $GITHUB_SHA | cut -c1-8)>"
+            git push -u origin builds -f
+            curl -s -X POST "https://api.telegram.org/bot${TG_BOT_KEY}/sendMessage" -d chat_id="-1001474066247" \
+              -d "disable_web_page_preview=true" \
+              -d "parse_mode=markdown" \
+              -d text="🤖 workflow for [$(echo $GITHUB_SHA | cut -c1-8)](https://github.com/uditkarode/AbleMusicPlayer/commit/${GITHUB_SHA}) finished 🤖"
+            curl -s -X POST "https://api.telegram.org/bot${TG_BOT_KEY}/sendSticker" -d chat_id="-1001474066247" \
+             -d "sticker=CAACAgUAAxkBAAJc416cRVy18acXP6HgtZSnxuuoJi01AAK9AAMtO2YjehthhceJ__sYBA"
