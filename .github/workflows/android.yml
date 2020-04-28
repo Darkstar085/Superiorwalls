@@ -19,7 +19,7 @@ jobs:
         env:
           GH_REPO: "${{ github.repository }}"
           TG_BOT_KEY: "${{ secrets.TG_BOT_KEY }}"
-          TG_BOT_KEY: "${{ secrets.GH_TOKEN }}"
+          GH_TOKEN: "${{ secrets.GH_TOKEN }}"
         name: Construction
         run: |
             curl -s -X POST "https://api.telegram.org/bot${TG_BOT_KEY}/sendMessage" -d chat_id="-1001474066247" \
