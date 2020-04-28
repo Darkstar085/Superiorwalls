@@ -28,7 +28,7 @@ jobs:
               -d text="🤖 building wi HEAD as [$(echo $GITHUB_SHA | cut -c1-8)](https://github.com/Sweeto143/Superiorwalls/commit/${GITHUB_SHA}) 🤖"
             git clone -b builds --single-branch https://github.com/Sweeto143/Superiorwalls.git GitBuilds
             cd GitBuilds
-            git reset --hard 6ec23f41b5379e9600a88ff29ff208f77bfe3ffb
+            git reset --hard 2fffa5ed956096d688335211cfbac2338122365d
             git reflog expire --all --expire=now
             git gc --prune=now --aggressive
             cd ..
@@ -45,7 +45,6 @@ jobs:
                     -F caption="$1"
                   git config --global user.name 'Bob The Builder'
                   git config --global user.email 'bob@the.builder'
-                  cd GitBuilds
                   git add SuperiorWalls-$(echo $GITHUB_SHA | cut -c1-8).apk
                   git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}"
                   git commit -m "bot: build installables <$(echo $GITHUB_SHA | cut -c1-8)>"
@@ -56,6 +55,6 @@ jobs:
             curl -s -X POST "https://api.telegram.org/bot${TG_BOT_KEY}/sendMessage" -d chat_id="-1001474066247" \
               -d "disable_web_page_preview=true" \
               -d "parse_mode=markdown" \
-              -d text="🤖 workflow for [$(echo $GITHUB_SHA | cut -c1-8)](https://github.com/uditkarode/AbleMusicPlayer/commit/${GITHUB_SHA}) finished 🤖"
+              -d text="🤖 workflow for [$(echo $GITHUB_SHA | cut -c1-8)](https://github.com/Sweeto143/Superiorwalls/commit/${GITHUB_SHA}) finished 🤖"
             curl -s -X POST "https://api.telegram.org/bot${TG_BOT_KEY}/sendSticker" -d chat_id="-1001474066247" \
              -d "sticker=CAACAgUAAxkBAAJc416cRVy18acXP6HgtZSnxuuoJi01AAK9AAMtO2YjehthhceJ__sYBA"
