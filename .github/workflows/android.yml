@@ -34,26 +34,25 @@ jobs:
             cd ..
             ./gradlew assembleDebug
 
-            if [ -d app/build/outputs/apk/release ]; then
-              if [ -n "$(ls -A app/build/outputs/apk/release)" ]; then
-                  cp app/build/outputs/apk/release/*.apk GitBuilds/SuperiorWalls-$(echo $GITHUB_SHA | cut -c1-8).apk
+            if [ -d app/build/outputs/apk/debug ]; then
+              if [ -n "$(ls -A app/build/outputs/apk/debug)" ]; then
+                  cp app/build/outputs/apk/debug/*.apk GitBuilds/SuperiorWalls-$(echo $GITHUB_SHA | cut -c1-8).apk
                   cd GitBuilds
                   curl --progress-bar -F document=@"SuperiorWalls-$(echo $GITHUB_SHA | cut -c1-8).apk" "https://api.telegram.org/bot${TG_BOT_KEY}/sendDocument" \
                     -F chat_id="-1001415196670"  \
                     -F "disable_web_page_preview=true" \
                     -F "parse_mode=Markdown" \
                     -F caption="$1"
-                  rm -rf app/build/outputs/apk
+                  git config --global user.name 'Bob The Builder'
+                  git config --global user.email 'bob@the.builder'
+                  cd GitBuilds
+                  git add SuperiorWalls-$(echo $GITHUB_SHA | cut -c1-8).apk
+                  git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}"
+                  git commit -m "bot: build installables <$(echo $GITHUB_SHA | cut -c1-8)>"
+                  git push -u origin builds -f
               fi
             fi
 
-            git config --global user.name 'Bob The Builder'
-            git config --global user.email 'bob@the.builder'
-            cd GitBuilds
-            git add *
-            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}"
-            git commit -m "bot: build installables <$(echo $GITHUB_SHA | cut -c1-8)>"
-            git push -u origin builds -f
             curl -s -X POST "https://api.telegram.org/bot${TG_BOT_KEY}/sendMessage" -d chat_id="-1001474066247" \
               -d "disable_web_page_preview=true" \
               -d "parse_mode=markdown" \
