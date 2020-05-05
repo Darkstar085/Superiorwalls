@@ -32,23 +32,24 @@
         android:key="data_prefs"
         android:title="@string/data_and_storage">
 
-        <!--<androidx.preference.SwitchPreference
+        <androidx.preference.SwitchPreference
             android:key="full_res_previews"
             android:summary="@string/display_full_res_previews_summary"
             android:title="@string/display_full_res_previews" />
-            -->
+
+        <androidx.preference.SwitchPreference
+            android:key="crop_pictures"
+            android:summary="@string/crop_pictures_summary"
+            android:title="@string/crop_pictures" />
+
+        <androidx.preference.Preference
+            android:key="download_location"
+            android:title="@string/download_location" />
 
         <androidx.preference.Preference
             android:key="clear_data_cache"
             android:summary="@string/clear_data_cache_summary"
             android:title="@string/clear_data_cache" />
-
-        <androidx.preference.Preference
-        android:key="download_location"
-        android:summary="@string/download_location_summary"
-        android:title="@string/download_location"
-        android:selectable="false" />
-
 
     </androidx.preference.PreferenceCategory>
 
