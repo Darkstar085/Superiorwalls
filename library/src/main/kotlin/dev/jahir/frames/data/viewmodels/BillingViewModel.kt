@@ -86,10 +86,10 @@ class BillingViewModel : ViewModel(), BillingClientStateListener, PurchasesUpdat
                 if (billingResult2.responseCode == BillingClient.BillingResponseCode.OK) {
                     when (skuType) {
                         BillingClient.SkuType.INAPP -> {
-                            inAppSkuDetailsData.postValue(detailsList)
+                            inAppSkuDetailsData.postValue(detailsList.sortedBy { it.priceAmountMicros })
                         }
                         BillingClient.SkuType.SUBS -> {
-                            subscriptionsSkuDetailsData.postValue(detailsList)
+                            subscriptionsSkuDetailsData.postValue(detailsList.sortedBy { it.priceAmountMicros })
                         }
                     }
                 }
