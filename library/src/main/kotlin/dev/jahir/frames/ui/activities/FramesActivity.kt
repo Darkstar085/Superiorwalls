@@ -58,6 +58,11 @@ abstract class FramesActivity : BaseBillingActivity<Preferences>() {
         loadWallpapersData(true)
     }
 
+    override fun onBackPressed() {
+        if (currentItemId != initialItemId) bottomNavigation?.selectedItemId = initialItemId
+        else super.onBackPressed()
+    }
+
     @LayoutRes
     open fun getLayoutRes(): Int = R.layout.activity_fragments_bottom_navigation
 
