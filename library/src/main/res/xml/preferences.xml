@@ -74,31 +74,11 @@
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory
-        android:key="legal"
-        android:title="@string/legal">
-
-        <androidx.preference.Preference
-            android:key="privacy"
-            android:persistent="true"
-            android:title="@string/privacy_policy" />
-
-        <androidx.preference.Preference
-            android:key="terms"
-            android:persistent="true"
-            android:title="@string/terms_conditions" />
-
-    </androidx.preference.PreferenceCategory>
-
-    <androidx.preference.PreferenceCategory
         android:key="versions"
         android:title="@string/versions">
 
         <androidx.preference.Preference
             android:key="app_version"
-            android:persistent="true" />
-
-        <androidx.preference.Preference
-            android:key="dashboard_version"
             android:persistent="true" />
 
     </androidx.preference.PreferenceCategory>
