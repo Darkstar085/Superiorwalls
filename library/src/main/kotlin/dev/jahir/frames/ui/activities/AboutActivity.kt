@@ -101,12 +101,12 @@ open class AboutActivity : BaseThemedActivity<Preferences>() {
             )
             items.add(
                 AboutItem(
-                    "Lumiq Creative",
-                    string(R.string.lumiq_description),
-                    "https://raw.githubusercontent.com/lumiqcreative/brand/master/word-mark/word-mark-on-yellow.png",
+                    "Patryk Michalik",
+                    string(R.string.patryk_description),
+                    "https://raw.githubusercontent.com/patrykmichalik/brand/master/logo-on-indigo.png",
                     arrayListOf(
-                        "Website" to "https://lumiqcreative.com/",
-                        "Twitter" to "https://twitter.com/lumiqcreative"
+                        "Website" to "https://patrykmichalik.com",
+                        "Twitter" to "https://twitter.com/patrykmichalik_"
                     )
                 )
             )
