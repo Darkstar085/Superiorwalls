@@ -30,6 +30,8 @@
         <item name="android:windowContentTransitions">true</item>
         <item name="android:windowActivityTransitions">true</item>
         <item name="android:windowAllowReturnTransitionOverlap">false</item>
+
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 
     <style name="BaseFramesSplashScreenTheme.Amoled" parent="BaseFramesSplashScreenTheme" tools:ignore="NewApi" />
