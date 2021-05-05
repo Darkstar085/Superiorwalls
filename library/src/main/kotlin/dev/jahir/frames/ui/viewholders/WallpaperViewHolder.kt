@@ -56,13 +56,22 @@ class WallpaperViewHolder(view: View) : PaletteGeneratorViewHolder(view) {
         }
 
         title?.let {
-            ViewCompat.setTransitionName(it, wallpaper.buildTitleTransitionName(adapterPosition))
+            ViewCompat.setTransitionName(
+                it,
+                wallpaper.buildTitleTransitionName(bindingAdapterPosition)
+            )
         }
         author?.let {
-            ViewCompat.setTransitionName(it, wallpaper.buildAuthorTransitionName(adapterPosition))
+            ViewCompat.setTransitionName(
+                it,
+                wallpaper.buildAuthorTransitionName(bindingAdapterPosition)
+            )
         }
         image?.let {
-            ViewCompat.setTransitionName(it, wallpaper.buildImageTransitionName(adapterPosition))
+            ViewCompat.setTransitionName(
+                it,
+                wallpaper.buildImageTransitionName(bindingAdapterPosition)
+            )
         }
 
         title?.text = wallpaper.name

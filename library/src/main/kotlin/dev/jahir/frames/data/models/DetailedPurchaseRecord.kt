@@ -1,7 +1,7 @@
 package dev.jahir.frames.data.models
 
 import android.os.Parcelable
-import kotlinx.android.parcel.Parcelize
+import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class DetailedPurchaseRecord(
