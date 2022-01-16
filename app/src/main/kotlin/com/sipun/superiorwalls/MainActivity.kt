@@ -1,4 +1,4 @@
-package dev.jahir.frames.app
+package com.sipun.superiorwalls
 
 import com.github.javiersantos.piracychecker.PiracyChecker
 import dev.jahir.frames.ui.activities.FramesActivity
