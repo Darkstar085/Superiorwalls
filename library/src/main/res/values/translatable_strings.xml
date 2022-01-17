@@ -124,4 +124,6 @@
     <string name="sure_to_exit_content">Do you want to save your settings before exit?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+
+    <string name="credits">Credits</string>
 </resources>

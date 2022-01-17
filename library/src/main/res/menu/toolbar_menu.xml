@@ -10,7 +10,7 @@
         app:actionViewClass="dev.jahir.frames.ui.widgets.CleanSearchView"
         app:showAsAction="ifRoom|collapseActionView" />
 
-    <item
+    <!-- <item
         android:id="@+id/changelog"
         android:icon="@drawable/ic_changelog"
         android:orderInCategory="200"
@@ -29,13 +29,13 @@
         android:icon="@drawable/ic_details"
         android:orderInCategory="400"
         android:title="@string/about"
-        app:showAsAction="never" />
+        app:showAsAction="never" />-->
 
     <item
         android:id="@+id/settings"
         android:icon="@drawable/ic_settings"
-        android:orderInCategory="500"
+        android:orderInCategory="200"
         android:title="@string/settings"
-        app:showAsAction="never" />
+        app:showAsAction="ifRoom" />
 
 </menu>
