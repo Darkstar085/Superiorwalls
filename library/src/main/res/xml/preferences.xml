@@ -72,6 +72,25 @@
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory
+        android:key="credits"
+        android:title="@string/credits">
+
+        <androidx.preference.Preference
+            android:title="Jahir Fiquitiva"
+            android:summary="Frames Dashboard Developer">
+            <intent android:action="android.intent.action.VIEW"
+                android:data="https://github.com/jahirfiquitiva/" />
+        </androidx.preference.Preference>
+
+        <androidx.preference.Preference
+            android:title="Sipun Ku Mahanta"
+            android:summary="Superiorwalls">
+            <intent android:action="android.intent.action.VIEW"
+                android:data="https://github.com/Darkstar085/" />
+        </androidx.preference.Preference>
+    </androidx.preference.PreferenceCategory>
+
+    <androidx.preference.PreferenceCategory
         android:key="legal"
         android:title="@string/legal">
 
