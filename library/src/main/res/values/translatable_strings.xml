@@ -126,4 +126,7 @@
     <string name="no">No</string>
 
     <string name="credits">Credits</string>
+
+    <string name="dashboard_creators_disclaimer">%1$s is powered by the %2$s dashboard. Listed below are the creators of %2$s. If you have questions concerning %1$s, please contact its designer(s), listed above.</string>
+
 </resources>
