@@ -2,6 +2,6 @@
 
 object Frames {
     const val appId = "com.sipun.superiorwalls"
-    const val version = 208
-    const val versionName = "2.0.8"
+    const val version = 300
+    const val versionName = "3.0.0"
 }
