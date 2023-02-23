@@ -12,7 +12,7 @@ object Versions {
     const val oneSignal = "4.8.1"
 
     // App
-    const val minSdk = 21
+    const val minSdk = 26
     const val targetSdk = 33
     const val buildTools = "33.0.0"
 
