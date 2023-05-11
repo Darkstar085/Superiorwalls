@@ -37,7 +37,7 @@ object Versions {
     const val room = "2.5.0"
 
     // Work Manager
-    const val work = "2.8.0"
+    const val work = "2.8.1"
 
     // Network & Serialization
     const val gson = "2.10.1"
