@@ -21,7 +21,7 @@ object Versions {
     // Android UI
     const val appcompat = "1.6.1"
     const val cardView = "1.0.0"
-    const val recyclerView = "1.2.1"
+    const val recyclerView = "1.3.0"
     const val swipeRefreshLayout = "1.1.0"
     const val palette = "1.0.0"
     const val preference = "1.2.0"
