@@ -34,7 +34,7 @@ object Versions {
     const val lifecycleExt = "2.2.0"
 
     // Room Database
-    const val room = "2.5.0"
+    const val room = "2.5.1"
 
     // Work Manager
     const val work = "2.8.1"
