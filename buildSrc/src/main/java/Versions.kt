@@ -30,7 +30,7 @@ object Versions {
     const val fragmentKtx = "1.5.7"
 
     // ViewModel and LiveData
-    const val lifecycle = "2.5.1"
+    const val lifecycle = "2.6.1"
     const val lifecycleExt = "2.2.0"
 
     // Room Database
