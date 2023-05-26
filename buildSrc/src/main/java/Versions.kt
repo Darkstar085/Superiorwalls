@@ -25,7 +25,7 @@ object Versions {
     const val swipeRefreshLayout = "1.1.0"
     const val palette = "1.0.0"
     const val preference = "1.2.0"
-    const val materialComponents = "1.8.0"
+    const val materialComponents = "1.9.0"
     const val activityKtx = "1.7.2"
     const val fragmentKtx = "1.5.7"
 
