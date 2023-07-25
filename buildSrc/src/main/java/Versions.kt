@@ -16,7 +16,7 @@ object Versions {
     const val buildTools = "33.0.2"
 
     // Coroutines
-    const val coroutines = "1.7.1"
+    const val coroutines = "1.7.3"
 
     // Android UI
     const val appcompat = "1.6.1"
