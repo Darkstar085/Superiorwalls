@@ -27,7 +27,7 @@ object Versions {
     const val preference = "1.2.0"
     const val materialComponents = "1.9.0"
     const val activityKtx = "1.7.1"
-    const val fragmentKtx = "1.5.7"
+    const val fragmentKtx = "1.6.1"
 
     // ViewModel and LiveData
     const val lifecycle = "2.6.1"
