@@ -45,7 +45,7 @@ object Versions {
 
     // Image loading and Touch Image View
     const val coil = "2.4.0"
-    const val touchImageView = "3.4"
+    const val touchImageView = "3.6"
 
     // Harmonic Colors
     const val harmonicColors = "1.0.0"
