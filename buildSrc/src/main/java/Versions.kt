@@ -8,7 +8,7 @@ object Versions {
     const val ksp = "$kotlin-1.0.13"
 
     // OneSignal
-    const val oneSignal = "4.8.6"
+    const val oneSignal = "5.0.5"
 
     // App
     const val minSdk = 26
