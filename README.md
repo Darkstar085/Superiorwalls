@@ -2,36 +2,41 @@
 
 <img src="https://user-images.githubusercontent.com/29405483/221204479-aebf0079-ae98-4490-b742-b1b1c3c62c0d.png" align="center">
 
-## Introduction:
 
-**Superiorwalls** Is The Wallpaper App based on [Frames](https://github.com/jahirfiquitiva/Frames) of **Superior OS** , This App Contains All The Wallapers Made For Superior OS By the Community.
+## Introduction
 
-## Features:
+**Superiorwalls** is a wallpaper app based on [Frames](https://github.com/jahirfiquitiva/Frames), designed for **Superior OS**.  
+It contains all the wallpapers created by the Superior OS community.
 
-- Material Design dashboard.
-- Material You support.
-- Theme Support.
-- Cloud based wallpapers.
-- App can work offline.
-- Categories section.
-- Favorites section.
+## Features
 
-## Installation:
+- Material Design dashboard  
+- Material You support  
+- Light and dark themes  
+- Cloud-based wallpapers  
+- Works offline with cached wallpapers  
+- Categories for better organization  
+- Favorites section for quick access  
 
-This app comes prebuilt with SuperiorOS, Non-SuperiorOS users can download the APK file manually and install it. To set a wallpaper from within the app, follow these steps:
+## Installation
 
-1. Browse the app for wallpapers
-2. Select a wallpaper you want to set
-3. Click on the "Set Wallpaper" button
+This app is preloaded with SuperiorOS.  
+For non-SuperiorOS users, you can manually download and install the APK file.
 
-## Contributions:
+To set a wallpaper from the app:
 
-Superiorwalls welcomes contributions from the community. If you would like to contribute, please feel free to submit a pull request. We would love to see your creations!
+1. Browse available wallpapers  
+2. Select the wallpaper you want  
+3. Tap on **Set Wallpaper**  
 
-For more information on how to contribute, please see the [contributing guide](https://github.com/SuperiorOS/Superiorwalls/blob/master/CONTRIBUTING.md).
+## Contributions
 
-## Credits:
+We welcome contributions from the community!  
+If you would like to share your wallpapers or improve the app, feel free to submit a **pull request**.  
 
-- [**Jahir Fiquitiva**](https://github.com/jahirfiquitiva) - Frames.
-- [**Udit Karode**](https://github.com/uditkarode) - For Helping/Fixing.
-- [**Wenlin Shen**](https://github.com/hugwalk) - For some UI Improvement.
+
+## Credits
+
+- [**Jahir Fiquitiva**](https://github.com/jahirfiquitiva) – Creator of Frames  
+- [**Udit Karode**](https://github.com/uditkarode) – Assistance and fixes  
+- [**Wenlin Shen**](https://github.com/hugwalk) – UI improvements  
