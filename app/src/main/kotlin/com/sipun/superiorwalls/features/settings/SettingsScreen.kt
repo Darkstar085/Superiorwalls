@@ -2,8 +2,15 @@ package com.sipun.superiorwalls.features.settings
 
 import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,7 +19,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -61,6 +67,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
@@ -110,10 +117,12 @@ fun SettingsScreen(store: AppSettingsStore) {
 @Composable
 private fun SettingsContent(themeMode: ThemeMode, interfaceSettings: InterfaceSettings, storageSettings: StorageSettings, notificationSettings: NotificationSettings, onThemeSelected: (ThemeMode) -> Unit, onAmoledChanged: (Boolean) -> Unit, onMaterialYouChanged: (Boolean) -> Unit, onNavigationBarChanged: (Boolean) -> Unit, onAnimationsChanged: (Boolean) -> Unit, onHighQualityChanged: (Boolean) -> Unit, onWifiOnlyChanged: (Boolean) -> Unit, onScaleToFitChanged: (Boolean) -> Unit, onNotificationsChanged: (Boolean) -> Unit, listState: LazyListState) {
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showAboutDialog by remember { mutableStateOf(false) }
     var cacheSize by remember { mutableStateOf("0 KB") }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val hasTappableNavigationBar = remember(context) { hasTappableNavigationBar(context) }
+    val versionName = remember(context) { getAppVersionName(context) }
     LaunchedEffect(Unit) { cacheSize = withContext(Dispatchers.IO) { calculateCacheSize(context) } }
     LazyColumn(
         state = listState,
@@ -159,21 +168,53 @@ private fun SettingsContent(themeMode: ThemeMode, interfaceSettings: InterfaceSe
         item {
             SettingsSection(title = stringResource(R.string.settings_about)) {
                 Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                    ListItem(headlineContent = { Text(stringResource(R.string.app_name)) }, supportingContent = { Text(stringResource(R.string.settings_about_summary)) }, leadingContent = { Surface(modifier = Modifier.size(40.dp), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primaryContainer) { Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.padding(8.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer) } })
+                    ListItem(
+                        modifier = Modifier.clickable { showAboutDialog = true },
+                        headlineContent = { Text(stringResource(R.string.app_name)) },
+                        supportingContent = { Text(stringResource(R.string.settings_about_summary)) },
+                        leadingContent = { Surface(modifier = Modifier.size(40.dp), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.primaryContainer) { Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.padding(8.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer) } },
+                    )
                 }
             }
         }
-        item {
-            SettingsSection(title = stringResource(R.string.settings_credits)) {
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                    ListItem(headlineContent = { Text(stringResource(R.string.settings_developer_name)) }, supportingContent = { Text(stringResource(R.string.settings_developer)) })
-                    ListItem(headlineContent = { Text(stringResource(R.string.settings_project_name)) }, supportingContent = { Text(stringResource(R.string.settings_project)) })
-                }
-            }
-        }
-        item { Text(stringResource(R.string.settings_version), modifier = Modifier.padding(horizontal = 4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium) }
     }
     if (showThemeDialog) ThemeSelectionDialog(themeMode, { onThemeSelected(it); showThemeDialog = false }, { showThemeDialog = false })
+    if (showAboutDialog) AboutDialog(versionName, { showAboutDialog = false })
+}
+
+private fun getAppVersionName(context: Context): String {
+    val packageInfo = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        context.packageManager.getPackageInfo(context.packageName, PackageManager.PackageInfoFlags.of(0))
+    } else {
+        @Suppress("DEPRECATION")
+        context.packageManager.getPackageInfo(context.packageName, 0)
+    }
+    return packageInfo.versionName ?: "Unknown"
+}
+
+@Composable
+private fun AboutDialog(versionName: String, onDismiss: () -> Unit) {
+    val heartTransition = rememberInfiniteTransition(label = "heart")
+    val heartScale by heartTransition.animateFloat(initialValue = 0.92f, targetValue = 1.12f, animationSpec = infiniteRepeatable(tween(650), RepeatMode.Reverse), label = "heartScale")
+    val heartAlpha by heartTransition.animateFloat(initialValue = 0.78f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(650), RepeatMode.Reverse), label = "heartAlpha")
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(modifier = Modifier.fillMaxWidth().widthIn(max = 420.dp).padding(horizontal = 24.dp), shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, tonalElevation = 6.dp) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Image(painter = painterResource(R.drawable.about_placeholder), contentDescription = stringResource(R.string.app_name), modifier = Modifier.size(112.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
+                Spacer(modifier = Modifier.height(18.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                    Text(stringResource(R.string.about_made_with_prefix), style = MaterialTheme.typography.titleMedium)
+                    Text(text = "❤️", modifier = Modifier.graphicsLayer { scaleX = heartScale; scaleY = heartScale; alpha = heartAlpha }.padding(horizontal = 4.dp), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.about_made_with_suffix), style = MaterialTheme.typography.titleMedium)
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(stringResource(R.string.about_version, versionName), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_done)) } }
+            }
+        }
+    }
 }
 
 private fun calculateCacheSize(context: Context): String {
@@ -200,11 +241,7 @@ private fun ThemePreferenceRow(selected: ThemeMode, onClick: () -> Unit) {
 
 @Composable
 private fun ThemeSelectionDialog(selected: ThemeMode, onSelected: (ThemeMode) -> Unit, onDismiss: () -> Unit) {
-    val options = listOf(
-        ThemeMode.SYSTEM to stringResource(R.string.settings_system),
-        ThemeMode.LIGHT to stringResource(R.string.settings_light),
-        ThemeMode.DARK to stringResource(R.string.settings_dark),
-    )
+    val options = listOf(ThemeMode.SYSTEM to stringResource(R.string.settings_system), ThemeMode.LIGHT to stringResource(R.string.settings_light), ThemeMode.DARK to stringResource(R.string.settings_dark))
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(modifier = Modifier.fillMaxWidth().widthIn(max = 420.dp).padding(horizontal = 24.dp), shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, tonalElevation = 6.dp) {
             Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
