@@ -17,7 +17,6 @@ sealed class AppDestination(
     data object Collections : AppDestination("collections", R.string.nav_collections, Icons.Default.Collections)
     data object Favorites : AppDestination("favorites", R.string.nav_favorites, Icons.Default.Favorite)
     data object Settings : AppDestination("settings", R.string.nav_settings, Icons.Default.Settings)
-    data object ImportedImage : AppDestination("imported-image", R.string.nav_imported_image, Icons.Default.Home)
     data object Details : AppDestination("details/{url}", R.string.nav_wallpaper, Icons.Default.Home) {
         const val routeBase = "details"
     }

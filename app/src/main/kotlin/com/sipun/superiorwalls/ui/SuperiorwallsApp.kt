@@ -43,7 +43,6 @@ import com.sipun.superiorwalls.features.details.WallpaperDetailsScreen
 import com.sipun.superiorwalls.features.favorites.FavoritesScreen
 import com.sipun.superiorwalls.features.home.HomeScreen
 import com.sipun.superiorwalls.features.settings.SettingsScreen
-import com.sipun.superiorwalls.features.system.ImportedImageScreen
 import com.sipun.superiorwalls.navigation.AppDestination
 import com.sipun.superiorwalls.ui.theme.SuperiorwallsTheme
 
@@ -61,7 +60,7 @@ private fun navigateTopLevel(navController: NavHostController, route: String) {
 }
 
 @Composable
-fun SuperiorwallsApp(importedImage: Uri? = null) {
+fun SuperiorwallsApp() {
     val navController = rememberNavController()
     val repository = AppContainer.wallpaperRepository
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -129,7 +128,7 @@ fun SuperiorwallsApp(importedImage: Uri? = null) {
                 }
                 NavHost(
                     navController = navController,
-                    startDestination = if (importedImage != null) AppDestination.ImportedImage.route else AppDestination.Home.route,
+                    startDestination = AppDestination.Home.route,
                     modifier = Modifier.weight(1f),
                 ) {
                     composable(AppDestination.Home.route) {
@@ -142,7 +141,6 @@ fun SuperiorwallsApp(importedImage: Uri? = null) {
                         FavoritesScreen(wallpapers, context) { wallpaper -> navController.navigate(detailsRoute(wallpaper.url, mode = "favorites")) }
                     }
                     composable(AppDestination.Settings.route) { SettingsScreen(settings) }
-                    if (importedImage != null) composable(AppDestination.ImportedImage.route) { ImportedImageScreen(importedImage) { navController.popBackStack() } }
                     composable(AppDestination.CollectionDetails.route, listOf(navArgument("name") { type = NavType.StringType })) { entry ->
                         val collection = entry.arguments?.getString("name")?.let { name -> collections.firstOrNull { it.name == name } }
                         if (collection == null) navController.popBackStack()
