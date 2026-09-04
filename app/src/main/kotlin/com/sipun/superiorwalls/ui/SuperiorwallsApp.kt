@@ -17,7 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.sipun.superiorwalls.data.repository.InMemoryWallpaperRepository
+import com.sipun.superiorwalls.AppContainer
 import com.sipun.superiorwalls.features.collections.CollectionWallpapersScreen
 import com.sipun.superiorwalls.features.collections.CollectionsScreen
 import com.sipun.superiorwalls.features.details.WallpaperDetailsScreen
@@ -28,13 +28,9 @@ import com.sipun.superiorwalls.navigation.AppDestination
 @Composable
 fun SuperiorwallsApp() {
     val navController = rememberNavController()
-    val repository = InMemoryWallpaperRepository()
+    val repository = AppContainer.wallpaperRepository
     val context = LocalContext.current
-    val topLevelDestinations = listOf(
-        AppDestination.Home,
-        AppDestination.Collections,
-        AppDestination.Favorites,
-    )
+    val topLevelDestinations = listOf(AppDestination.Home, AppDestination.Collections, AppDestination.Favorites)
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val showNavigation = topLevelDestinations.any { destination ->
@@ -46,9 +42,8 @@ fun SuperiorwallsApp() {
             if (showNavigation) {
                 NavigationBar {
                     topLevelDestinations.forEach { destination ->
-                        val selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true
                         NavigationBarItem(
-                            selected = selected,
+                            selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
                             onClick = {
                                 navController.navigate(destination.route) {
                                     popUpTo(AppDestination.Home.route) { saveState = true }
@@ -70,11 +65,9 @@ fun SuperiorwallsApp() {
             modifier = Modifier.padding(padding),
         ) {
             composable(AppDestination.Home.route) {
-                HomeScreen(
-                    onWallpaperClick = { wallpaper ->
-                        navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
-                    },
-                )
+                HomeScreen(onWallpaperClick = { wallpaper ->
+                    navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
+                })
             }
             composable(AppDestination.Collections.route) {
                 CollectionsScreen(

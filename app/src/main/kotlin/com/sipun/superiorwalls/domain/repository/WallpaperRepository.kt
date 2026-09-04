@@ -8,4 +8,5 @@ interface WallpaperRepository {
     fun observeWallpapers(): Flow<List<Wallpaper>>
     fun observeCollections(): Flow<List<Collection>>
     fun findWallpaper(url: String): Wallpaper?
+    suspend fun refresh(): Result<Unit>
 }

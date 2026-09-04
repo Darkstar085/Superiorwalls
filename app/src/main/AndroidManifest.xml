@@ -5,7 +5,9 @@
     <application
         android:name=".SuperiorwallsApplication"
         android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
         android:label="Superiorwalls"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault.DayNight.NoActionBar">
         <activity
