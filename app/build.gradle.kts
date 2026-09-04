@@ -42,5 +42,6 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.room.runtime)
     ksp(libs.room.compiler)
+    testImplementation(libs.junit)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

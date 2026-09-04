@@ -13,6 +13,8 @@ import com.sipun.superiorwalls.domain.model.Wallpaper
 import com.sipun.superiorwalls.domain.repository.WallpaperRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -21,6 +23,7 @@ class RoomWallpaperRepository(
     private val database: SuperiorwallsDatabase,
 ) : WallpaperRepository {
     private val dao = database.wallpaperDao()
+    private val refreshMutex = Mutex()
 
     @Volatile
     private var cachedWallpapers: List<Wallpaper> = emptyList()
@@ -39,18 +42,20 @@ class RoomWallpaperRepository(
         }
 
     override fun observeCollections(): Flow<List<Collection>> =
-        observeWallpapers().map(::buildCollections)
+        observeWallpapers().map(WallpaperCollectionMapper::build)
 
     override fun findWallpaper(url: String): Wallpaper? =
         cachedWallpapers.firstOrNull { it.url == url }
 
-    override suspend fun refresh(): Result<Unit> = runCatching {
-        seedLocalDataIfEmpty()
-        val remote = service.getJson(DATA_URL)
-            .filter { it.url.isNotBlank() }
-            .distinctBy { it.url }
-        if (remote.isNotEmpty()) {
-            dao.replaceAll(remote.map(Wallpaper::toEntity))
+    override suspend fun refresh(): Result<Unit> = refreshMutex.withLock {
+        runCatching {
+            seedLocalDataIfEmpty()
+            val remote = service.getJson(DATA_URL)
+                .filter { it.url.isNotBlank() }
+                .distinctBy { it.url }
+            if (remote.isNotEmpty()) {
+                dao.replaceAll(remote.map(Wallpaper::toEntity))
+            }
         }
     }
 
@@ -62,31 +67,6 @@ class RoomWallpaperRepository(
             .filter { it.url.isNotBlank() }
             .distinctBy { it.url }
         if (local.isNotEmpty()) dao.upsertAll(local.map(Wallpaper::toEntity))
-    }
-
-    private fun buildCollections(wallpapers: List<Wallpaper>): List<Collection> {
-        val grouped = linkedMapOf<String, Pair<String, MutableList<Wallpaper>>>()
-        wallpapers.forEach { wallpaper ->
-            wallpaper.collections.orEmpty()
-                .replace("|", ",")
-                .split(",")
-                .map(String::trim)
-                .filter(String::isNotBlank)
-                .distinct()
-                .forEach { name ->
-                    val key = name.lowercase()
-                    val current = grouped[key]?.second ?: mutableListOf()
-                    current += wallpaper
-                    grouped[key] = name to current
-                }
-        }
-        return grouped.values.map { (name, items) ->
-            Collection(
-                name = name,
-                displayName = name.replaceFirstChar { it.uppercase() },
-                wallpapers = items.distinctBy { it.url },
-            )
-        }
     }
 
     companion object {
