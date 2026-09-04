@@ -43,4 +43,6 @@ class InMemoryWallpaperRepository : WallpaperRepository {
     override fun observeCollections(): Flow<List<Collection>> = flowOf(
         listOf(Collection(name = "nature", displayName = "Nature", wallpapers = wallpapers))
     )
+
+    override fun findWallpaper(url: String): Wallpaper? = wallpapers.firstOrNull { it.url == url }
 }

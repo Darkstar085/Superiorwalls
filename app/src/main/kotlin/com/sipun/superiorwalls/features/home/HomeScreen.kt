@@ -1,5 +1,6 @@
 package com.sipun.superiorwalls.features.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,6 +28,7 @@ import com.sipun.superiorwalls.domain.model.Wallpaper
 
 @Composable
 fun HomeScreen(
+    onWallpaperClick: (Wallpaper) -> Unit,
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -35,12 +37,12 @@ fun HomeScreen(
         state.isLoading -> LoadingContent()
         state.errorMessage != null -> ErrorContent(state.errorMessage)
         state.wallpapers.isEmpty() -> EmptyContent()
-        else -> WallpaperGrid(state.wallpapers)
+        else -> WallpaperGrid(state.wallpapers, onWallpaperClick)
     }
 }
 
 @Composable
-private fun WallpaperGrid(wallpapers: List<Wallpaper>) {
+private fun WallpaperGrid(wallpapers: List<Wallpaper>, onWallpaperClick: (Wallpaper) -> Unit) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 160.dp),
         contentPadding = PaddingValues(12.dp),
@@ -48,14 +50,12 @@ private fun WallpaperGrid(wallpapers: List<Wallpaper>) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
-        items(wallpapers, key = { it.url }) { wallpaper ->
-            WallpaperCard(wallpaper)
-        }
+        items(wallpapers, key = { it.url }) { wallpaper -> WallpaperCard(wallpaper, onWallpaperClick) }
     }
 }
 
 @Composable
-private fun WallpaperCard(wallpaper: Wallpaper) {
+private fun WallpaperCard(wallpaper: Wallpaper, onClick: (Wallpaper) -> Unit) {
     AsyncImage(
         model = wallpaper.thumbnail?.takeIf { it.isNotBlank() } ?: wallpaper.url,
         contentDescription = wallpaper.name,
@@ -63,27 +63,22 @@ private fun WallpaperCard(wallpaper: Wallpaper) {
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(0.68f)
-            .clip(MaterialTheme.shapes.large),
+            .clip(MaterialTheme.shapes.large)
+            .clickable { onClick(wallpaper) },
     )
 }
 
 @Composable
 private fun LoadingContent() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
-    }
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
 }
 
 @Composable
 private fun EmptyContent() {
-    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Text("No wallpapers available yet.")
-    }
+    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) { Text("No wallpapers available yet.") }
 }
 
 @Composable
 private fun ErrorContent(message: String) {
-    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Text(message)
-    }
+    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) { Text(message) }
 }
