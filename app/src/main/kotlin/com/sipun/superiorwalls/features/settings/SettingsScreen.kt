@@ -27,12 +27,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -48,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.data.repository.AppSettingsStore
+import com.sipun.superiorwalls.data.repository.InterfaceSettings
 import com.sipun.superiorwalls.data.repository.ThemeMode
 import kotlin.math.roundToInt
 
@@ -55,12 +55,19 @@ import kotlin.math.roundToInt
 fun SettingsScreen(store: AppSettingsStore) {
     val themeMode by remember(store) { store.observeThemeMode() }
         .collectAsStateWithLifecycle(initialValue = store.themeMode())
+    val interfaceSettings by remember(store) { store.observeInterfaceSettings() }
+        .collectAsStateWithLifecycle(initialValue = store.interfaceSettings())
     val listState = rememberLazyListState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         SettingsContent(
             themeMode = themeMode,
+            interfaceSettings = interfaceSettings,
             onThemeSelected = store::setThemeMode,
+            onAmoledChanged = store::setAmoledTheme,
+            onMaterialYouChanged = store::setMaterialYou,
+            onNavigationBarChanged = store::setColorNavigationBar,
+            onAnimationsChanged = store::setAnimationsEnabled,
             listState = listState,
         )
         SettingsCollapsingHeader(listState = listState)
@@ -70,7 +77,12 @@ fun SettingsScreen(store: AppSettingsStore) {
 @Composable
 private fun SettingsContent(
     themeMode: ThemeMode,
+    interfaceSettings: InterfaceSettings,
     onThemeSelected: (ThemeMode) -> Unit,
+    onAmoledChanged: (Boolean) -> Unit,
+    onMaterialYouChanged: (Boolean) -> Unit,
+    onNavigationBarChanged: (Boolean) -> Unit,
+    onAnimationsChanged: (Boolean) -> Unit,
     listState: LazyListState,
 ) {
     LazyColumn(
@@ -98,6 +110,50 @@ private fun SettingsContent(
                     ThemeModeSelector(
                         selected = themeMode,
                         onSelected = onThemeSelected,
+                    )
+                }
+            }
+        }
+
+        item {
+            SettingsSection(
+                title = stringResource(R.string.settings_interface),
+                summary = stringResource(R.string.settings_interface_summary),
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    ),
+                ) {
+                    SettingsSwitchRow(
+                        title = stringResource(R.string.settings_amoled_theme),
+                        summary = stringResource(R.string.settings_amoled_theme_summary),
+                        checked = interfaceSettings.amoledTheme,
+                        onCheckedChange = onAmoledChanged,
+                        icon = Icons.Default.DarkMode,
+                    )
+                    SettingsSwitchRow(
+                        title = stringResource(R.string.settings_material_you),
+                        summary = stringResource(R.string.settings_material_you_summary),
+                        checked = interfaceSettings.materialYou,
+                        onCheckedChange = onMaterialYouChanged,
+                        icon = Icons.Default.LightMode,
+                        enabled = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S,
+                    )
+                    SettingsSwitchRow(
+                        title = stringResource(R.string.settings_color_navigation_bar),
+                        summary = stringResource(R.string.settings_color_navigation_bar_summary),
+                        checked = interfaceSettings.colorNavigationBar,
+                        onCheckedChange = onNavigationBarChanged,
+                        icon = Icons.Default.SettingsBrightness,
+                    )
+                    SettingsSwitchRow(
+                        title = stringResource(R.string.settings_animations),
+                        summary = stringResource(R.string.settings_animations_summary),
+                        checked = interfaceSettings.animationsEnabled,
+                        onCheckedChange = onAnimationsChanged,
+                        icon = Icons.Default.SettingsBrightness,
                     )
                 }
             }
@@ -165,8 +221,43 @@ private fun SettingsContent(
 }
 
 @Composable
+private fun SettingsSwitchRow(
+    title: String,
+    summary: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    enabled: Boolean = true,
+) {
+    ListItem(
+        leadingContent = {
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = if (enabled) 1f else 0.55f),
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.padding(8.dp),
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = if (enabled) 1f else 0.55f),
+                )
+            }
+        },
+        headlineContent = { Text(title) },
+        supportingContent = { Text(summary) },
+        trailingContent = {
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                enabled = enabled,
+            )
+        },
+    )
+}
+
+@Composable
 private fun SettingsCollapsingHeader(listState: LazyListState) {
-    var titleWidthPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
     val collapseDistancePx = with(density) { 112.dp.toPx() }
     val scrollOffsetPx = listState.firstVisibleItemIndex * 1000f + listState.firstVisibleItemScrollOffset
@@ -178,6 +269,7 @@ private fun SettingsCollapsingHeader(listState: LazyListState) {
             .fillMaxWidth()
             .height(148.dp),
     ) {
+        val titleWidthPx = with(density) { 92.dp.toPx() }
         val centeredLeftPx = (with(density) { maxWidth.toPx() } - titleWidthPx) / 2f
         val titleX = (targetLeftPx - centeredLeftPx) * progress
         val titleY = with(density) { lerp(62.dp, 8.dp, progress).toPx() }
@@ -186,7 +278,6 @@ private fun SettingsCollapsingHeader(listState: LazyListState) {
             text = stringResource(R.string.settings_title),
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .onSizeChanged { titleWidthPx = it.width }
                 .offset {
                     IntOffset(titleX.roundToInt(), titleY.roundToInt())
                 },

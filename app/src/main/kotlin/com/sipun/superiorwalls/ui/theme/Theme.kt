@@ -1,5 +1,6 @@
 package com.sipun.superiorwalls.ui.theme
 
+import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -8,8 +9,10 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 
 private val LightColors = lightColorScheme(
     primary = Color(0xFF4F5D92),
@@ -24,19 +27,41 @@ private val DarkColors = darkColorScheme(
 @Composable
 fun SuperiorwallsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    useMaterialYou: Boolean = true,
+    useAmoledTheme: Boolean = false,
+    colorNavigationBar: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
-    val dynamicColors = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val dynamicColors = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && useMaterialYou
     val colorScheme = when {
-        dynamicColors && darkTheme -> dynamicDarkColorScheme(context)
+        dynamicColors && darkTheme -> dynamicDarkColorScheme(context).let { scheme ->
+            if (useAmoledTheme) scheme.copy(
+                background = Color.Black,
+                surface = Color.Black,
+            ) else scheme
+        }
         dynamicColors -> dynamicLightColorScheme(context)
+        darkTheme && useAmoledTheme -> DarkColors.copy(
+            background = Color.Black,
+            surface = Color.Black,
+        )
         darkTheme -> DarkColors
         else -> LightColors
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        content = content,
-    )
+    ) {
+        val activity = context as? Activity
+        val navigationBarColor = if (colorNavigationBar) {
+            colorScheme.surface.toArgb()
+        } else {
+            Color.Transparent.toArgb()
+        }
+        SideEffect {
+            activity?.window?.navigationBarColor = navigationBarColor
+        }
+        content()
+    }
 }

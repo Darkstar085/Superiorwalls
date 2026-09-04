@@ -1,6 +1,12 @@
 package com.sipun.superiorwalls.ui
 
 import android.net.Uri
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -76,6 +82,7 @@ fun SuperiorwallsApp() {
     val favorites = remember { FavoriteWallpaperStore(context) }
     val favoriteUrls by favorites.observeFavoriteUrls().collectAsStateWithLifecycle(initialValue = favorites.favoriteUrls())
     val themeMode by settings.observeThemeMode().collectAsStateWithLifecycle(initialValue = settings.themeMode())
+    val interfaceSettings by settings.observeInterfaceSettings().collectAsStateWithLifecycle(initialValue = settings.interfaceSettings())
     val wallpapers by repository.observeWallpapers().collectAsStateWithLifecycle(initialValue = emptyList())
     val collections by repository.observeCollections().collectAsStateWithLifecycle(initialValue = emptyList())
     val destinations = listOf(AppDestination.Home, AppDestination.Collections, AppDestination.Favorites, AppDestination.Settings)
@@ -89,7 +96,12 @@ fun SuperiorwallsApp() {
         ThemeMode.DARK -> true
     }
 
-    SuperiorwallsTheme(darkTheme = darkTheme) {
+    SuperiorwallsTheme(
+        darkTheme = darkTheme,
+        useMaterialYou = interfaceSettings.materialYou,
+        useAmoledTheme = interfaceSettings.amoledTheme,
+        colorNavigationBar = interfaceSettings.colorNavigationBar,
+    ) {
         Scaffold(
             contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
             modifier = Modifier.fillMaxSize(),
@@ -117,6 +129,34 @@ fun SuperiorwallsApp() {
                         navController = navController,
                         startDestination = AppDestination.Home.route,
                         modifier = Modifier.weight(1f),
+                        enterTransition = {
+                            if (interfaceSettings.animationsEnabled) {
+                                fadeIn() + slideInHorizontally(initialOffsetX = { it / 8 })
+                            } else {
+                                EnterTransition.None
+                            }
+                        },
+                        exitTransition = {
+                            if (interfaceSettings.animationsEnabled) {
+                                fadeOut() + slideOutHorizontally(targetOffsetX = { -it / 8 })
+                            } else {
+                                ExitTransition.None
+                            }
+                        },
+                        popEnterTransition = {
+                            if (interfaceSettings.animationsEnabled) {
+                                fadeIn() + slideInHorizontally(initialOffsetX = { -it / 8 })
+                            } else {
+                                EnterTransition.None
+                            }
+                        },
+                        popExitTransition = {
+                            if (interfaceSettings.animationsEnabled) {
+                                fadeOut() + slideOutHorizontally(targetOffsetX = { it / 8 })
+                            } else {
+                                ExitTransition.None
+                            }
+                        },
                     ) {
                         composable(AppDestination.Home.route) {
                             HomeScreen(onWallpaperClick = { wallpaper -> navController.navigate(detailsRoute(wallpaper.url)) })

@@ -17,6 +17,16 @@
     <string name="settings_system">System default</string>
     <string name="settings_light">Light</string>
     <string name="settings_dark">Dark</string>
+    <string name="settings_interface">Interface</string>
+    <string name="settings_interface_summary">Customize the look and feel of the app.</string>
+    <string name="settings_amoled_theme">AMOLED theme</string>
+    <string name="settings_amoled_theme_summary">Use pure black backgrounds in dark mode.</string>
+    <string name="settings_material_you">Material You</string>
+    <string name="settings_material_you_summary">Use colors from your Android 12+ system theme.</string>
+    <string name="settings_color_navigation_bar">Colored navigation bar</string>
+    <string name="settings_color_navigation_bar_summary">Match the system navigation area to the app surface.</string>
+    <string name="settings_animations">Animations</string>
+    <string name="settings_animations_summary">Keep interface motion and transitions enabled.</string>
     <string name="settings_about">About</string>
     <string name="settings_about_summary">Wallpaper browsing, collections, favorites, downloads, and system wallpaper tools.</string>
     <string name="settings_version">Version 3.3.6 (336)</string>
