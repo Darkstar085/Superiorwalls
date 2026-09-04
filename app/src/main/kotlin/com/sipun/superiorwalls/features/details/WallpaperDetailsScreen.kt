@@ -9,8 +9,6 @@ import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.rememberTransformableState
-import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,7 +51,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -61,7 +58,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -105,9 +101,6 @@ fun WallpaperDetailsScreen(
     var busy by remember { mutableStateOf(false) }
     var showInfo by remember { mutableStateOf(false) }
     var showBars by remember { mutableStateOf(true) }
-    var scale by remember(wallpaper.url) { mutableFloatStateOf(1f) }
-    var offsetX by remember(wallpaper.url) { mutableFloatStateOf(0f) }
-    var offsetY by remember(wallpaper.url) { mutableFloatStateOf(0f) }
     var paletteColors by remember(wallpaper.url) { mutableStateOf<List<Int>>(emptyList()) }
     val isFavorite = wallpaper.url in favoriteUrls
 
@@ -142,18 +135,15 @@ fun WallpaperDetailsScreen(
         setSystemBarsVisible(true)
         onDispose { setSystemBarsVisible(true) }
     }
-    BackHandler(enabled = showInfo) { showInfo = false }
+
+    BackHandler {
+        if (showInfo) showInfo = false else onBack()
+    }
 
     val painter = rememberAsyncImagePainter(model = wallpaper.url)
     LaunchedEffect(painter.state) {
         val result = painter.state as? AsyncImagePainter.State.Success ?: return@LaunchedEffect
         paletteColors = extractPalette(result.result.image.toBitmap())
-    }
-
-    val transformState = rememberTransformableState { zoomChange, panChange, _ ->
-        scale = (scale * zoomChange).coerceIn(1f, 5f)
-        offsetX += panChange.x
-        offsetY += panChange.y
     }
 
     Scaffold(
@@ -225,13 +215,6 @@ fun WallpaperDetailsScreen(
                 .pointerInput(showBars) {
                     detectTapGestures(
                         onTap = { setSystemBarsVisible(!showBars) },
-                        onDoubleTap = {
-                            scale = if (scale > 1f) 1f else 2.5f
-                            if (scale == 1f) {
-                                offsetX = 0f
-                                offsetY = 0f
-                            }
-                        },
                     )
                 },
             contentAlignment = Alignment.Center,
@@ -240,15 +223,7 @@ fun WallpaperDetailsScreen(
                 painter = painter,
                 contentDescription = wallpaper.name,
                 contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        translationX = offsetX
-                        translationY = offsetY
-                    }
-                    .transformable(transformState),
+                modifier = Modifier.fillMaxSize(),
             )
 
             if (showBars) {
@@ -555,18 +530,4 @@ private suspend fun extractPalette(bitmap: Bitmap): List<Int> = withContext(Disp
         .sortedByDescending { it.population }
         .take(6)
         .map { it.rgb }
-}
-
-private fun formatBytes(bytes: Long): String = when {
-    bytes >= 1024L * 1024L -> String.format(
-        java.util.Locale.getDefault(),
-        "%.1f MB",
-        bytes / 1024f / 1024f,
-    )
-    bytes >= 1024L -> String.format(
-        java.util.Locale.getDefault(),
-        "%.0f KB",
-        bytes / 1024f,
-    )
-    else -> "$bytes B"
 }
