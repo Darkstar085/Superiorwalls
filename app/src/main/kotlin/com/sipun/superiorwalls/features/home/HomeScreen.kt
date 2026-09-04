@@ -4,9 +4,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -42,7 +42,10 @@ fun HomeScreen(
 }
 
 @Composable
-private fun WallpaperGrid(wallpapers: List<Wallpaper>, onWallpaperClick: (Wallpaper) -> Unit) {
+fun WallpaperGrid(
+    wallpapers: List<Wallpaper>,
+    onWallpaperClick: (Wallpaper) -> Unit,
+) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 160.dp),
         contentPadding = PaddingValues(12.dp),
@@ -50,7 +53,9 @@ private fun WallpaperGrid(wallpapers: List<Wallpaper>, onWallpaperClick: (Wallpa
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
-        items(wallpapers, key = { it.url }) { wallpaper -> WallpaperCard(wallpaper, onWallpaperClick) }
+        items(wallpapers, key = { it.url }) { wallpaper ->
+            WallpaperCard(wallpaper, onWallpaperClick)
+        }
     }
 }
 
@@ -70,15 +75,21 @@ private fun WallpaperCard(wallpaper: Wallpaper, onClick: (Wallpaper) -> Unit) {
 
 @Composable
 private fun LoadingContent() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
+    }
 }
 
 @Composable
 private fun EmptyContent() {
-    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) { Text("No wallpapers available yet.") }
+    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Text("No wallpapers available yet.")
+    }
 }
 
 @Composable
 private fun ErrorContent(message: String) {
-    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) { Text(message) }
+    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Text(message)
+    }
 }

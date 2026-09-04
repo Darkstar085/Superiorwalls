@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 class InMemoryWallpaperRepository : WallpaperRepository {
-    private val wallpapers = listOf(
+    private val wallpaperData = listOf(
         Wallpaper(
             name = "Mountain Lake",
             author = "Unsplash",
@@ -38,11 +38,15 @@ class InMemoryWallpaperRepository : WallpaperRepository {
         ),
     )
 
-    override fun observeWallpapers(): Flow<List<Wallpaper>> = flowOf(wallpapers)
+    val wallpapers: List<Wallpaper> get() = wallpaperData
 
-    override fun observeCollections(): Flow<List<Collection>> = flowOf(
-        listOf(Collection(name = "nature", displayName = "Nature", wallpapers = wallpapers))
+    val collections: List<Collection> = listOf(
+        Collection(name = "nature", displayName = "Nature", wallpapers = wallpaperData),
     )
 
-    override fun findWallpaper(url: String): Wallpaper? = wallpapers.firstOrNull { it.url == url }
+    override fun observeWallpapers(): Flow<List<Wallpaper>> = flowOf(wallpaperData)
+
+    override fun observeCollections(): Flow<List<Collection>> = flowOf(collections)
+
+    override fun findWallpaper(url: String): Wallpaper? = wallpaperData.firstOrNull { it.url == url }
 }
