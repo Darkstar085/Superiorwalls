@@ -7,24 +7,29 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.SettingsBrightness
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.data.repository.AppSettingsStore
@@ -37,73 +42,194 @@ fun SettingsScreen(store: AppSettingsStore) {
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(dimensionResource(R.dimen.screen_padding)),
+        contentPadding = PaddingValues(
+            horizontal = dimensionResource(R.dimen.screen_padding),
+            vertical = dimensionResource(R.dimen.screen_padding),
+        ),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.settings_section_spacing)),
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.compact_spacing))) {
-                Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium)
-                Text(stringResource(R.string.settings_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        item {
-            Text(stringResource(R.string.settings_appearance), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(R.string.settings_appearance_summary), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        item {
-            Card(Modifier.fillMaxWidth()) {
-                ThemeOption(ThemeMode.SYSTEM, themeMode, store::setThemeMode)
-                ThemeOption(ThemeMode.LIGHT, themeMode, store::setThemeMode)
-                ThemeOption(ThemeMode.DARK, themeMode, store::setThemeMode)
-            }
-        }
-        item {
-            Text(stringResource(R.string.settings_about), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
-            Card(Modifier.fillMaxWidth()) {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.app_name)) },
-                    supportingContent = { Text(stringResource(R.string.settings_about_summary)) },
-                    leadingContent = { Icon(Icons.Default.Info, contentDescription = null) },
+                Text(
+                    stringResource(R.string.settings_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                )
+                Text(
+                    stringResource(R.string.settings_subtitle),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyLarge,
                 )
             }
         }
+
         item {
-            Text(stringResource(R.string.settings_credits), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
-            Card(Modifier.fillMaxWidth()) {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.settings_developer_name)) },
-                    supportingContent = { Text(stringResource(R.string.settings_developer)) },
-                )
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.settings_project_name)) },
-                    supportingContent = { Text(stringResource(R.string.settings_project)) },
-                )
+            SettingsSection(
+                title = stringResource(R.string.settings_appearance),
+                summary = stringResource(R.string.settings_appearance_summary),
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    ),
+                ) {
+                    ThemeModeSelector(
+                        selected = themeMode,
+                        onSelected = store::setThemeMode,
+                    )
+                }
             }
         }
+
         item {
-            Text(stringResource(R.string.settings_version), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            SettingsSection(title = stringResource(R.string.settings_about)) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    ),
+                ) {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.app_name)) },
+                        supportingContent = { Text(stringResource(R.string.settings_about_summary)) },
+                        leadingContent = {
+                            Surface(
+                                modifier = Modifier.size(40.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                            ) {
+                                Icon(
+                                    Icons.Default.Info,
+                                    contentDescription = null,
+                                    modifier = Modifier.padding(8.dp),
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                )
+                            }
+                        },
+                    )
+                }
+            }
+        }
+
+        item {
+            SettingsSection(title = stringResource(R.string.settings_credits)) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    ),
+                ) {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.settings_developer_name)) },
+                        supportingContent = { Text(stringResource(R.string.settings_developer)) },
+                    )
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.settings_project_name)) },
+                        supportingContent = { Text(stringResource(R.string.settings_project)) },
+                    )
+                }
+            }
+        }
+
+        item {
+            Text(
+                stringResource(R.string.settings_version),
+                modifier = Modifier.padding(horizontal = 4.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelMedium,
+            )
         }
     }
 }
 
 @Composable
-private fun ThemeOption(mode: ThemeMode, selected: ThemeMode, onSelected: (ThemeMode) -> Unit) {
-    val icon = when (mode) {
-        ThemeMode.SYSTEM -> Icons.Default.SettingsBrightness
-        ThemeMode.LIGHT -> Icons.Default.LightMode
-        ThemeMode.DARK -> Icons.Default.DarkMode
-    }
-    val title = when (mode) {
-        ThemeMode.SYSTEM -> stringResource(R.string.settings_system)
-        ThemeMode.LIGHT -> stringResource(R.string.settings_light)
-        ThemeMode.DARK -> stringResource(R.string.settings_dark)
-    }
-    Row(Modifier.fillMaxWidth().padding(horizontal = dimensionResource(R.dimen.compact_spacing))) {
-        ListItem(
-            headlineContent = { Text(title) },
-            leadingContent = { Icon(icon, contentDescription = null) },
-            trailingContent = { RadioButton(selected = mode == selected, onClick = { onSelected(mode) }) },
-            modifier = Modifier.fillMaxWidth(),
+private fun SettingsSection(
+    title: String,
+    summary: String? = null,
+    content: @Composable () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.compact_spacing))) {
+        Text(
+            title,
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.titleMedium,
         )
+        if (summary != null) {
+            Text(
+                summary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        content()
     }
 }
+
+@Composable
+private fun ThemeModeSelector(
+    selected: ThemeMode,
+    onSelected: (ThemeMode) -> Unit,
+) {
+    val options = listOf(
+        ThemeOption(ThemeMode.SYSTEM, stringResource(R.string.settings_system), Icons.Default.SettingsBrightness),
+        ThemeOption(ThemeMode.LIGHT, stringResource(R.string.settings_light), Icons.Default.LightMode),
+        ThemeOption(ThemeMode.DARK, stringResource(R.string.settings_dark), Icons.Default.DarkMode),
+    )
+
+    Column(modifier = Modifier.padding(8.dp)) {
+        options.forEach { option ->
+            val isSelected = option.mode == selected
+            Surface(
+                onClick = { onSelected(option.mode) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerLow
+                },
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Icon(
+                        imageVector = option.icon,
+                        contentDescription = null,
+                        tint = if (isSelected) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                    Text(
+                        option.title,
+                        modifier = Modifier.weight(1f),
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    if (isSelected) {
+                        Surface(
+                            modifier = Modifier.size(10.dp),
+                            shape = RoundedCornerShape(50),
+                            color = MaterialTheme.colorScheme.primary,
+                        ) {}
+                    }
+                }
+            }
+        }
+    }
+}
+
+private data class ThemeOption(
+    val mode: ThemeMode,
+    val title: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+)
