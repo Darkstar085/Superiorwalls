@@ -14,10 +14,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,14 +42,9 @@ fun CollectionsScreen(collections: List<Collection>, onCollectionClick: (Collect
         verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.grid_spacing)),
     ) {
         item {
-            Box(Modifier.fillMaxWidth().padding(bottom = dimensionResource(R.dimen.compact_spacing))) {
-                Column {
-                    Text(stringResource(R.string.collections_title), style = MaterialTheme.typography.headlineMedium)
-                    Text(stringResource(R.string.collections_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                IconButton(onClick = {}, modifier = Modifier.align(Alignment.TopEnd)) {
-                    Icon(Icons.Default.Search, contentDescription = stringResource(R.string.action_search))
-                }
+            Column(Modifier.fillMaxWidth().padding(bottom = dimensionResource(R.dimen.compact_spacing))) {
+                Text(stringResource(R.string.collections_title), style = MaterialTheme.typography.headlineMedium)
+                Text(stringResource(R.string.collections_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         items(collections, key = { it.name }) { collection -> CollectionCard(collection, onCollectionClick) }

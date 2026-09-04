@@ -11,11 +11,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,9 +37,6 @@ fun CollectionWallpapersScreen(collection: Collection, onWallpaperClick: (Wallpa
             Column(Modifier.padding(start = dimensionResource(R.dimen.screen_header_padding))) {
                 Text(collection.displayName, style = MaterialTheme.typography.headlineMedium)
                 Text(stringResource(R.string.collection_count, collection.count), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            IconButton(onClick = {}, modifier = Modifier.align(Alignment.TopEnd)) {
-                Icon(Icons.Default.Search, contentDescription = stringResource(R.string.action_search))
             }
         }
         WallpaperGrid(collection.wallpapers, onWallpaperClick)

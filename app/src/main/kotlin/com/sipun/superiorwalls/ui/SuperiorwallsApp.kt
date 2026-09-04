@@ -2,16 +2,22 @@ package com.sipun.superiorwalls.ui
 
 import android.net.Uri
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
@@ -20,9 +26,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
@@ -83,23 +91,20 @@ fun SuperiorwallsApp() {
 
     SuperiorwallsTheme(darkTheme = darkTheme) {
         Scaffold(
-            contentWindowInsets = WindowInsets.safeDrawing,
-            bottomBar = {
-                if (showNavigation && !useRail) {
-                    Surface(
-                        modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.bottom_nav_margin), vertical = dimensionResource(R.dimen.bottom_nav_margin)),
-                        shape = RoundedCornerShape(dimensionResource(R.dimen.bottom_nav_corner_radius)),
-                        color = MaterialTheme.colorScheme.surfaceContainer,
-                        tonalElevation = dimensionResource(R.dimen.viewer_navigation_elevation),
-                    ) {
-                        NavigationBar(
-                            modifier = Modifier.padding(dimensionResource(R.dimen.compact_spacing)),
-                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                            tonalElevation = dimensionResource(R.dimen.viewer_navigation_elevation),
-                        ) {
+            contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
+            modifier = Modifier.fillMaxSize(),
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+            ) {
+                Row(Modifier.fillMaxSize()) {
+                    if (showNavigation && useRail) {
+                        NavigationRail {
                             destinations.forEach { destination ->
                                 val label = stringResource(destination.labelRes)
-                                NavigationBarItem(
+                                NavigationRailItem(
                                     selected = current?.hierarchy?.any { it.route == destination.route } == true,
                                     onClick = { navigateTopLevel(navController, destination.route) },
                                     icon = { Icon(destination.icon, contentDescription = label) },
@@ -108,69 +113,102 @@ fun SuperiorwallsApp() {
                             }
                         }
                     }
-                }
-            },
-            modifier = Modifier.fillMaxSize(),
-        ) { paddingValues ->
-            Row(Modifier.fillMaxSize().padding(paddingValues)) {
-                if (showNavigation && useRail) {
-                    NavigationRail {
-                        destinations.forEach { destination ->
-                            val label = stringResource(destination.labelRes)
-                            NavigationRailItem(
-                                selected = current?.hierarchy?.any { it.route == destination.route } == true,
-                                onClick = { navigateTopLevel(navController, destination.route) },
-                                icon = { Icon(destination.icon, contentDescription = label) },
-                                label = { Text(label) },
+                    NavHost(
+                        navController = navController,
+                        startDestination = AppDestination.Home.route,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        composable(AppDestination.Home.route) {
+                            HomeScreen(onWallpaperClick = { wallpaper -> navController.navigate(detailsRoute(wallpaper.url)) })
+                        }
+                        composable(AppDestination.Collections.route) {
+                            CollectionsScreen(collections) { collection -> navController.navigate("${AppDestination.CollectionDetails.routeBase}/${Uri.encode(collection.name)}") }
+                        }
+                        composable(AppDestination.Favorites.route) {
+                            FavoritesScreen(wallpapers, context) { wallpaper -> navController.navigate(detailsRoute(wallpaper.url, mode = "favorites")) }
+                        }
+                        composable(AppDestination.Settings.route) { SettingsScreen(settings) }
+                        composable(AppDestination.CollectionDetails.route, listOf(navArgument("name") { type = NavType.StringType })) { entry ->
+                            val collection = entry.arguments?.getString("name")?.let { name -> collections.firstOrNull { it.name == name } }
+                            if (collection == null) navController.popBackStack()
+                            else CollectionWallpapersScreen(collection) { wallpaper -> navController.navigate(detailsRoute(wallpaper.url, collection = collection.name)) }
+                        }
+                        composable(
+                            AppDestination.Details.route,
+                            listOf(
+                                navArgument("url") { type = NavType.StringType },
+                                navArgument("mode") { type = NavType.StringType; defaultValue = "all" },
+                                navArgument("collection") { type = NavType.StringType; nullable = true; defaultValue = null },
+                            ),
+                        ) { entry ->
+                            val wallpaper = entry.arguments?.getString("url")?.let { url -> wallpapers.firstOrNull { it.url == url } }
+                            val mode = entry.arguments?.getString("mode") ?: "all"
+                            val collection = entry.arguments?.getString("collection")
+                            if (wallpaper == null) navController.popBackStack()
+                            else WallpaperDetailsScreen(
+                                wallpaper = wallpaper,
+                                wallpapers = wallpapers,
+                                favoriteUrls = favoriteUrls,
+                                mode = mode,
+                                collectionName = collection,
+                                onWallpaperChange = { next ->
+                                    navController.navigate(detailsRoute(next.url, mode, collection)) {
+                                        popUpTo(AppDestination.Details.route) { inclusive = true }
+                                    }
+                                },
+                                onBack = { navController.popBackStack() },
                             )
                         }
                     }
                 }
-                NavHost(
-                    navController = navController,
-                    startDestination = AppDestination.Home.route,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    composable(AppDestination.Home.route) {
-                        HomeScreen(onWallpaperClick = { wallpaper -> navController.navigate(detailsRoute(wallpaper.url)) })
-                    }
-                    composable(AppDestination.Collections.route) {
-                        CollectionsScreen(collections) { collection -> navController.navigate("${AppDestination.CollectionDetails.routeBase}/${Uri.encode(collection.name)}") }
-                    }
-                    composable(AppDestination.Favorites.route) {
-                        FavoritesScreen(wallpapers, context) { wallpaper -> navController.navigate(detailsRoute(wallpaper.url, mode = "favorites")) }
-                    }
-                    composable(AppDestination.Settings.route) { SettingsScreen(settings) }
-                    composable(AppDestination.CollectionDetails.route, listOf(navArgument("name") { type = NavType.StringType })) { entry ->
-                        val collection = entry.arguments?.getString("name")?.let { name -> collections.firstOrNull { it.name == name } }
-                        if (collection == null) navController.popBackStack()
-                        else CollectionWallpapersScreen(collection) { wallpaper -> navController.navigate(detailsRoute(wallpaper.url, collection = collection.name)) }
-                    }
-                    composable(
-                        AppDestination.Details.route,
-                        listOf(
-                            navArgument("url") { type = NavType.StringType },
-                            navArgument("mode") { type = NavType.StringType; defaultValue = "all" },
-                            navArgument("collection") { type = NavType.StringType; nullable = true; defaultValue = null },
-                        ),
-                    ) { entry ->
-                        val wallpaper = entry.arguments?.getString("url")?.let { url -> wallpapers.firstOrNull { it.url == url } }
-                        val mode = entry.arguments?.getString("mode") ?: "all"
-                        val collection = entry.arguments?.getString("collection")
-                        if (wallpaper == null) navController.popBackStack()
-                        else WallpaperDetailsScreen(
-                            wallpaper = wallpaper,
-                            wallpapers = wallpapers,
-                            favoriteUrls = favoriteUrls,
-                            mode = mode,
-                            collectionName = collection,
-                            onWallpaperChange = { next ->
-                                navController.navigate(detailsRoute(next.url, mode, collection)) {
-                                    popUpTo(AppDestination.Details.route) { inclusive = true }
+
+                if (showNavigation && !useRail) {
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(horizontal = 18.dp, vertical = 10.dp)
+                            .navigationBarsPadding(),
+                        shape = RoundedCornerShape(34.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.96f),
+                        tonalElevation = 6.dp,
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 6.dp, vertical = 5.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            destinations.forEach { destination ->
+                                val label = stringResource(destination.labelRes)
+                                val selected = current?.hierarchy?.any { it.route == destination.route } == true
+                                Surface(
+                                    onClick = { navigateTopLevel(navController, destination.route) },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(28.dp),
+                                    color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent,
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                                    ) {
+                                        Icon(
+                                            imageVector = destination.icon,
+                                            contentDescription = label,
+                                            tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(25.dp),
+                                        )
+                                        Text(
+                                            label,
+                                            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            style = MaterialTheme.typography.labelSmall,
+                                        )
+                                    }
                                 }
-                            },
-                            onBack = { navController.popBackStack() },
-                        )
+                            }
+                        }
                     }
                 }
             }

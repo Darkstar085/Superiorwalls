@@ -6,33 +6,19 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Wallpaper
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -47,8 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,18 +42,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.palette.graphics.Palette
-import coil3.compose.AsyncImagePainter
-import coil3.compose.rememberAsyncImagePainter
+import coil3.compose.AsyncImage
 import coil3.toBitmap
 import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.data.repository.FavoriteWallpaperStore
@@ -110,8 +93,6 @@ fun WallpaperDetailsScreen(
         }
     }
     val index = viewerWallpapers.indexOfFirst { it.url == wallpaper.url }
-    val previous = index.takeIf { it > 0 }?.let(viewerWallpapers::get)
-    val next = index.takeIf { it >= 0 && it < viewerWallpapers.lastIndex }?.let(viewerWallpapers::get)
 
     fun setSystemBarsVisible(visible: Boolean) {
         showBars = visible
@@ -131,59 +112,90 @@ fun WallpaperDetailsScreen(
     }
     BackHandler { if (showInfo) showInfo = false else onBack() }
 
-    val painter = rememberAsyncImagePainter(model = wallpaper.url)
-    val painterState by painter.state.collectAsState()
-    LaunchedEffect(painterState) {
-        when (val state = painterState) {
-            is AsyncImagePainter.State.Success -> {
-                paletteColors = extractPalette(state.result.image.toBitmap())
-            }
-            else -> Unit
-        }
-    }
-
     Scaffold(
-        containerColor = colorResource(R.color.viewer_background),
+        containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        snackbarHost = { SnackbarHost(snackbar) },
-        bottomBar = {
-            if (showBars) ViewerActionBar(
-                isFavorite = isFavorite,
-                busy = busy,
-                onInfo = { showInfo = true },
-                onSave = {
-                    busy = true
-                    scope.launch {
-                        try { snackbar.showSnackbar(saveToGallery(context, wallpaper.url, wallpaper.name) ?: context.getString(R.string.viewer_saved)) }
-                        finally { busy = false }
-                    }
-                },
-                onApply = {
-                    busy = true
-                    scope.launch {
-                        try { snackbar.showSnackbar(setAsWallpaper(context, wallpaper.url) ?: context.getString(R.string.viewer_applied)) }
-                        finally { busy = false }
-                    }
-                },
-                onFavorite = { favorites.setFavorite(wallpaper.url, !isFavorite) },
-            )
-        },
     ) { padding ->
         Box(
-            modifier = Modifier.fillMaxSize().padding(padding).pointerInput(showBars) {
-                detectTapGestures(onTap = { setSystemBarsVisible(!showBars) })
-            },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .pointerInput(wallpaper.url, index, viewerWallpapers.size) {
+                    var dragDistance = 0f
+                    detectHorizontalDragGestures(
+                        onHorizontalDrag = { _, dragAmount -> dragDistance += dragAmount },
+                        onDragEnd = {
+                            val threshold = 120f
+                            when {
+                                dragDistance <= -threshold && index >= 0 && index < viewerWallpapers.lastIndex -> onWallpaperChange(viewerWallpapers[index + 1])
+                                dragDistance >= threshold && index > 0 -> onWallpaperChange(viewerWallpapers[index - 1])
+                            }
+                            dragDistance = 0f
+                        },
+                        onDragCancel = { dragDistance = 0f },
+                    )
+                },
             contentAlignment = Alignment.Center,
         ) {
-            Image(painter = painter, contentDescription = wallpaper.name, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize())
+            AsyncImage(
+                model = wallpaper.url,
+                contentDescription = wallpaper.name,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
+                onSuccess = { state ->
+                    val bitmap = state.result.image.toBitmap()
+                    scope.launch { paletteColors = extractPalette(bitmap) }
+                },
+            )
             if (showBars) {
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier.statusBarsPadding().padding(dimensionResource(R.dimen.viewer_top_padding)).align(Alignment.TopStart).size(dimensionResource(R.dimen.viewer_navigation_button_size)),
-                ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.viewer_back), tint = colorResource(R.color.viewer_overlay_content)) }
-                ViewerNavigationButton(previous != null, true, { previous?.let(onWallpaperChange) }, Modifier.align(Alignment.CenterStart))
-                ViewerNavigationButton(next != null, false, { next?.let(onWallpaperChange) }, Modifier.align(Alignment.CenterEnd))
+                Surface(
+                    modifier = Modifier
+                        .statusBarsPadding()
+                        .padding(dimensionResource(R.dimen.viewer_top_padding))
+                        .align(Alignment.TopStart)
+                        .size(dimensionResource(R.dimen.viewer_navigation_button_size)),
+                    shape = CircleShape,
+                    color = colorResource(R.color.viewer_back_button_background),
+                ) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.viewer_back),
+                            tint = colorResource(R.color.viewer_overlay_content),
+                        )
+                    }
+                }
             }
+            if (showBars) {
+                ViewerActionBar(
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    isFavorite = isFavorite,
+                    busy = busy,
+                    onInfo = { showInfo = true },
+                    onSave = {
+                        busy = true
+                        scope.launch {
+                            try { snackbar.showSnackbar(saveToGallery(context, wallpaper.url, wallpaper.name) ?: context.getString(R.string.viewer_saved)) }
+                            finally { busy = false }
+                        }
+                    },
+                    onApply = {
+                        busy = true
+                        scope.launch {
+                            try { snackbar.showSnackbar(setAsWallpaper(context, wallpaper.url) ?: context.getString(R.string.viewer_applied)) }
+                            finally { busy = false }
+                        }
+                    },
+                    onFavorite = { favorites.setFavorite(wallpaper.url, !isFavorite) },
+                )
+            }
+            SnackbarHost(
+                hostState = snackbar,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(bottom = dimensionResource(R.dimen.viewer_snackbar_bottom_padding)),
+            )
         }
     }
 
@@ -196,7 +208,7 @@ fun WallpaperDetailsScreen(
         WallpaperInfoSheet(wallpaper, paletteColors, { colorInt ->
             val hex = "#${colorInt.toString(16).padStart(6, '0').uppercase()}"
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            clipboard.setPrimaryClip(ClipData.newPlainText("color", hex))
+            clipboard.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.viewer_color_clipboard_label), hex))
             scope.launch { snackbar.showSnackbar(context.getString(R.string.viewer_color_copied, hex)) }
         }, { showInfo = false })
     }
@@ -204,6 +216,7 @@ fun WallpaperDetailsScreen(
 
 @Composable
 private fun ViewerActionBar(
+    modifier: Modifier = Modifier,
     isFavorite: Boolean,
     busy: Boolean,
     onInfo: () -> Unit,
@@ -212,18 +225,31 @@ private fun ViewerActionBar(
     onFavorite: () -> Unit,
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        tonalElevation = dimensionResource(R.dimen.viewer_action_elevation),
+        modifier = modifier
+            .fillMaxWidth(0.84f)
+            .navigationBarsPadding()
+            .padding(
+                horizontal = dimensionResource(R.dimen.viewer_action_pill_horizontal_padding),
+                vertical = dimensionResource(R.dimen.viewer_action_pill_vertical_padding),
+            ),
+        shape = RoundedCornerShape(dimensionResource(R.dimen.viewer_action_pill_corner_radius)),
+        color = colorResource(R.color.viewer_action_pill_background),
+        tonalElevation = dimensionResource(R.dimen.viewer_action_pill_elevation),
     ) {
-        BottomAppBar(
-            containerColor = Color.Transparent,
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = dimensionResource(R.dimen.viewer_content_padding)),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = dimensionResource(R.dimen.viewer_action_pill_inner_horizontal_padding),
+                    vertical = dimensionResource(R.dimen.viewer_action_pill_inner_vertical_padding),
+                ),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_info), Icons.Default.Info, onInfo)
             ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_save), Icons.Default.Download, onSave, !busy)
             ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_apply), Icons.Default.Wallpaper, onApply, !busy)
-            ViewerAction(Modifier.weight(1f), if (isFavorite) stringResource(R.string.viewer_unfavorite) else stringResource(R.string.viewer_favorite), if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, onFavorite, !busy)
+            ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_favorite), if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, onFavorite, !busy)
         }
     }
 }
@@ -240,20 +266,19 @@ private fun ViewerAction(modifier: Modifier, label: String, icon: androidx.compo
 }
 
 @Composable
-private fun ViewerNavigationButton(enabled: Boolean, previous: Boolean, onClick: () -> Unit, modifier: Modifier) {
-    Surface(modifier = modifier.padding(horizontal = dimensionResource(R.dimen.viewer_content_padding)), shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = dimensionResource(R.dimen.viewer_navigation_elevation)) {
-        IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(dimensionResource(R.dimen.viewer_navigation_button_size))) {
-            Icon(if (previous) Icons.AutoMirrored.Filled.ArrowBack else Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(if (previous) R.string.viewer_previous else R.string.viewer_next))
-        }
-    }
-}
-
-@Composable
 private fun WallpaperInfoSheet(wallpaper: Wallpaper, paletteColors: List<Int>, onCopyColor: (Int) -> Unit, onClose: () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().padding(dimensionResource(R.dimen.viewer_sheet_padding)), verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.viewer_action_spacing))) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.viewer_details), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
-            IconButton(onClick = onClose) { Icon(Icons.Default.Close, contentDescription = stringResource(R.string.viewer_back)) }
+            Surface(
+                modifier = Modifier.size(dimensionResource(R.dimen.viewer_sheet_close_button_size)),
+                shape = CircleShape,
+                color = colorResource(R.color.viewer_sheet_close_button_background),
+            ) {
+                IconButton(onClick = onClose) {
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.viewer_back))
+                }
+            }
         }
         InfoRow(stringResource(R.string.viewer_name), wallpaper.name)
         InfoRow(stringResource(R.string.viewer_author), wallpaper.author?.takeIf { it.isNotBlank() } ?: stringResource(R.string.viewer_unknown_author))
@@ -290,5 +315,20 @@ private fun InfoRow(label: String, value: String) {
 }
 
 private suspend fun extractPalette(bitmap: Bitmap): List<Int> = withContext(Dispatchers.Default) {
-    Palette.from(bitmap).maximumColorCount(6).generate().swatches.sortedByDescending { it.population }.take(6).map { it.rgb }
+    val softwareBitmap = if (bitmap.config == Bitmap.Config.HARDWARE) {
+        bitmap.copy(Bitmap.Config.ARGB_8888, false)
+    } else {
+        bitmap
+    }
+    val maxDimension = 256
+    val sample = if (softwareBitmap.width > maxDimension || softwareBitmap.height > maxDimension) {
+        val scale = minOf(maxDimension.toFloat() / softwareBitmap.width, maxDimension.toFloat() / softwareBitmap.height)
+        Bitmap.createScaledBitmap(softwareBitmap, (softwareBitmap.width * scale).toInt().coerceAtLeast(1), (softwareBitmap.height * scale).toInt().coerceAtLeast(1), true)
+    } else softwareBitmap
+    try {
+        Palette.from(sample).maximumColorCount(6).generate().swatches.sortedByDescending { it.population }.take(6).map { it.rgb }
+    } finally {
+        if (sample !== softwareBitmap) sample.recycle()
+        if (softwareBitmap !== bitmap) softwareBitmap.recycle()
+    }
 }

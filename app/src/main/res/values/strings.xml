@@ -1,11 +1,6 @@
 <resources>
     <string name="app_name">Superiorwalls</string>
     <string name="home_subtitle">Wallpapers that inspire.</string>
-    <string name="action_search">Search wallpapers</string>
-    <string name="filter_all">All</string>
-    <string name="filter_popular">Popular</string>
-    <string name="filter_latest">Latest</string>
-    <string name="filter_4k">4K</string>
     <string name="home_empty">No wallpapers available yet.</string>
     <string name="collections_title">Collections</string>
     <string name="collections_subtitle">Browse wallpapers by theme.</string>
@@ -37,8 +32,6 @@
     <string name="nav_wallpaper">Wallpaper</string>
     <string name="nav_collection">Collection</string>
     <string name="viewer_back">Back</string>
-    <string name="viewer_previous">Previous wallpaper</string>
-    <string name="viewer_next">Next wallpaper</string>
     <string name="viewer_info">Info</string>
     <string name="viewer_save">Save</string>
     <string name="viewer_apply">Apply</string>
@@ -52,6 +45,7 @@
     <string name="viewer_copyright">Copyright</string>
     <string name="viewer_colors">Colors</string>
     <string name="viewer_copy_color_hint">Tap a color to copy its hex code.</string>
+    <string name="viewer_color_clipboard_label">color</string>
     <string name="viewer_color_copied">%1$s copied</string>
     <string name="viewer_applied">Wallpaper applied</string>
     <string name="viewer_saved">Saved to Pictures/Superiorwalls</string>

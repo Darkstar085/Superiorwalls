@@ -1,6 +1,9 @@
 <resources>
     <color name="viewer_background">#000000</color>
     <color name="viewer_overlay_content">#FFFFFFFF</color>
+    <color name="viewer_back_button_background">#66000000</color>
+    <color name="viewer_sheet_close_button_background">#24FFFFFF</color>
+    <color name="viewer_action_pill_background">#5520262D</color>
     <color name="viewer_swatch_dark_content">#FF000000</color>
     <color name="viewer_swatch_light_content">#FFFFFFFF</color>
     <color name="accent_blue">#4DA3FF</color>

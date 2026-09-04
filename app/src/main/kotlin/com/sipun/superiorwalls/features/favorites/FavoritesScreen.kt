@@ -7,10 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,15 +33,10 @@ fun FavoritesScreen(
     val favorites = wallpapers.filter { it.url in favoriteUrls }
 
     Column(Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier.fillMaxWidth().padding(dimensionResource(R.dimen.screen_padding)),
-        ) {
+        Box(modifier = Modifier.fillMaxWidth().padding(dimensionResource(R.dimen.screen_padding))) {
             Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.compact_spacing))) {
                 Text(stringResource(R.string.favorites_title), style = MaterialTheme.typography.headlineMedium)
                 Text(stringResource(R.string.favorites_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            IconButton(onClick = {}, modifier = Modifier.align(Alignment.TopEnd)) {
-                Icon(Icons.Default.Search, contentDescription = stringResource(R.string.action_search))
             }
         }
         if (favorites.isEmpty()) {
@@ -53,9 +44,7 @@ fun FavoritesScreen(
                 Text(stringResource(R.string.favorites_empty), style = MaterialTheme.typography.bodyLarge)
             }
         } else {
-            WallpaperGrid(favorites, onWallpaperClick, favoriteUrls = favoriteUrls, onFavoriteToggle = { wallpaper ->
-                store.setFavorite(wallpaper.url, false)
-            })
+            WallpaperGrid(favorites, onWallpaperClick, favoriteUrls = favoriteUrls, onFavoriteToggle = { wallpaper -> store.setFavorite(wallpaper.url, false) })
         }
     }
 }
