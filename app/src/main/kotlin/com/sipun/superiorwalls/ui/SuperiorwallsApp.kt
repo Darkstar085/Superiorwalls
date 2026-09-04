@@ -23,10 +23,11 @@ import com.sipun.superiorwalls.features.collections.CollectionsScreen
 import com.sipun.superiorwalls.features.details.WallpaperDetailsScreen
 import com.sipun.superiorwalls.features.favorites.FavoritesScreen
 import com.sipun.superiorwalls.features.home.HomeScreen
+import com.sipun.superiorwalls.features.system.ImportedImageScreen
 import com.sipun.superiorwalls.navigation.AppDestination
 
 @Composable
-fun SuperiorwallsApp() {
+fun SuperiorwallsApp(importedImage: Uri? = null) {
     val navController = rememberNavController()
     val repository = AppContainer.wallpaperRepository
     val context = LocalContext.current
@@ -61,7 +62,7 @@ fun SuperiorwallsApp() {
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = AppDestination.Home.route,
+            startDestination = if (importedImage != null) AppDestination.ImportedImage.route else AppDestination.Home.route,
             modifier = Modifier.padding(padding),
         ) {
             composable(AppDestination.Home.route) {
@@ -85,6 +86,14 @@ fun SuperiorwallsApp() {
                         navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
                     },
                 )
+            }
+            if (importedImage != null) {
+                composable(AppDestination.ImportedImage.route) {
+                    ImportedImageScreen(
+                        uri = importedImage,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
             }
             composable(
                 route = AppDestination.CollectionDetails.route,

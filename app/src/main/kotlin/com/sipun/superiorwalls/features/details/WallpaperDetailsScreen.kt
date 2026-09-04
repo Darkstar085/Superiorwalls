@@ -1,11 +1,8 @@
 package com.sipun.superiorwalls.features.details
 
-import android.app.WallpaperManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.os.Environment
-import androidx.compose.foundation.background
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,18 +34,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil3.ImageLoader
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.SuccessResult
-import coil3.toBitmap
 import com.sipun.superiorwalls.data.repository.FavoriteWallpaperStore
 import com.sipun.superiorwalls.domain.model.Wallpaper
-import kotlinx.coroutines.Dispatchers
+import com.sipun.superiorwalls.features.system.saveToGallery
+import com.sipun.superiorwalls.features.system.setAsWallpaper
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileOutputStream
 
 @Composable
 fun WallpaperDetailsScreen(wallpaper: Wallpaper, onBack: () -> Unit) {
@@ -62,9 +53,7 @@ fun WallpaperDetailsScreen(wallpaper: Wallpaper, onBack: () -> Unit) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(padding),
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 AsyncImage(
                     model = wallpaper.url,
@@ -77,7 +66,6 @@ fun WallpaperDetailsScreen(wallpaper: Wallpaper, onBack: () -> Unit) {
                     modifier = Modifier.statusBarsPadding().padding(8.dp),
                 ) { Text("Back") }
             }
-
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp),
@@ -97,10 +85,10 @@ fun WallpaperDetailsScreen(wallpaper: Wallpaper, onBack: () -> Unit) {
                             favorites.setFavorite(wallpaper.url, isFavorite)
                         }) { Text(if (isFavorite) "Unfavorite" else "Favorite") }
                         OutlinedButton(onClick = {
-                            context.startActivity(Intent(Intent.ACTION_SEND).apply {
+                            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, wallpaper.url)
-                            }.let { Intent.createChooser(it, "Share wallpaper") })
+                            }, "Share wallpaper"))
                         }) { Text("Share") }
                     }
                 }
@@ -109,20 +97,14 @@ fun WallpaperDetailsScreen(wallpaper: Wallpaper, onBack: () -> Unit) {
                         Button(enabled = !busy, onClick = {
                             busy = true
                             scope.launch {
-                                val result = loadBitmap(context, wallpaper.url)
-                                if (result == null) snackbar.showSnackbar("Could not load wallpaper")
-                                else {
-                                    WallpaperManager.getInstance(context).setBitmap(result)
-                                    snackbar.showSnackbar("Wallpaper applied")
-                                }
+                                snackbar.showSnackbar(setAsWallpaper(context, wallpaper.url) ?: "Wallpaper applied")
                                 busy = false
                             }
                         }) { if (busy) CircularProgressIndicator() else Text("Set wallpaper") }
                         OutlinedButton(enabled = !busy, onClick = {
                             busy = true
                             scope.launch {
-                                val saved = saveBitmap(context, wallpaper)
-                                snackbar.showSnackbar(saved ?: "Could not save wallpaper")
+                                snackbar.showSnackbar(saveToGallery(context, wallpaper.url, wallpaper.name) ?: "Saved to Pictures/Superiorwalls")
                                 busy = false
                             }
                         }) { Text("Download") }
@@ -131,19 +113,4 @@ fun WallpaperDetailsScreen(wallpaper: Wallpaper, onBack: () -> Unit) {
             }
         }
     }
-}
-
-private suspend fun loadBitmap(context: Context, url: String): Bitmap? = withContext(Dispatchers.IO) {
-    val request = ImageRequest.Builder(context).data(url).allowHardware(false).build()
-    val result = ImageLoader(context).execute(request)
-    (result as? SuccessResult)?.image?.toBitmap()
-}
-
-private suspend fun saveBitmap(context: Context, wallpaper: Wallpaper): String? = withContext(Dispatchers.IO) {
-    val bitmap = loadBitmap(context, wallpaper.url) ?: return@withContext null
-    val directory = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.apply { mkdirs() } ?: return@withContext null
-    val safeName = wallpaper.name.replace(Regex("[^A-Za-z0-9._-]"), "_").ifBlank { "wallpaper" }
-    val file = File(directory, "$safeName.jpg")
-    FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.JPEG, 95, it) }
-    "Saved to ${file.absolutePath}"
 }
