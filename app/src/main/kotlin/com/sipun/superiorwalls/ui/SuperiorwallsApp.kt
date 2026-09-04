@@ -1,8 +1,8 @@
 package com.sipun.superiorwalls.ui
 
 import android.net.Uri
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -47,6 +47,8 @@ fun SuperiorwallsApp(importedImage: Uri? = null) {
     val context = LocalContext.current
     val settings = remember { AppSettingsStore(context) }
     val themeMode by settings.observeThemeMode().collectAsStateWithLifecycle(initialValue = settings.themeMode())
+    val wallpapers by repository.observeWallpapers().collectAsStateWithLifecycle(initialValue = emptyList())
+    val collections by repository.observeCollections().collectAsStateWithLifecycle(initialValue = emptyList())
     val destinations = listOf(AppDestination.Home, AppDestination.Collections, AppDestination.Favorites, AppDestination.Settings)
     val entry by navController.currentBackStackEntryAsState()
     val current = entry?.destination
@@ -96,15 +98,19 @@ fun SuperiorwallsApp(importedImage: Uri? = null) {
                     modifier = Modifier.weight(1f),
                 ) {
                     composable(AppDestination.Home.route) {
-                        HomeScreen { wallpaper -> navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}") }
+                        HomeScreen(
+                            onWallpaperClick = { wallpaper ->
+                                navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
+                            },
+                        )
                     }
                     composable(AppDestination.Collections.route) {
-                        CollectionsScreen(repository.collections) { collection ->
+                        CollectionsScreen(collections) { collection ->
                             navController.navigate("${AppDestination.CollectionDetails.routeBase}/${Uri.encode(collection.name)}")
                         }
                     }
                     composable(AppDestination.Favorites.route) {
-                        FavoritesScreen(repository.wallpapers, context) { wallpaper ->
+                        FavoritesScreen(wallpapers, context) { wallpaper ->
                             navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
                         }
                     }
@@ -117,14 +123,14 @@ fun SuperiorwallsApp(importedImage: Uri? = null) {
                         }
                     }
                     composable(AppDestination.CollectionDetails.route, listOf(navArgument("name") { type = NavType.StringType })) { entry ->
-                        val collection = entry.arguments?.getString("name")?.let { name -> repository.collections.firstOrNull { it.name == name } }
+                        val collection = entry.arguments?.getString("name")?.let { name -> collections.firstOrNull { it.name == name } }
                         if (collection == null) navController.popBackStack()
                         else CollectionWallpapersScreen(collection) { wallpaper ->
                             navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
                         }
                     }
                     composable(AppDestination.Details.route, listOf(navArgument("url") { type = NavType.StringType })) { entry ->
-                        val wallpaper = entry.arguments?.getString("url")?.let(repository::findWallpaper)
+                        val wallpaper = entry.arguments?.getString("url")?.let { url -> wallpapers.firstOrNull { it.url == url } }
                         if (wallpaper == null) navController.popBackStack()
                         else WallpaperDetailsScreen(wallpaper) { navController.popBackStack() }
                     }
