@@ -1,7 +1,26 @@
 package com.sipun.superiorwalls
 
-import com.sipun.superiorwalls.data.repository.InMemoryWallpaperRepository
+import android.content.Context
+import androidx.room3.Room
+import com.sipun.superiorwalls.data.local.SuperiorwallsDatabase
+import com.sipun.superiorwalls.data.repository.RoomWallpaperRepository
+import com.sipun.superiorwalls.domain.repository.WallpaperRepository
 
 object AppContainer {
-    val wallpaperRepository: InMemoryWallpaperRepository by lazy(::InMemoryWallpaperRepository)
+    private lateinit var applicationContext: Context
+    private val database: SuperiorwallsDatabase by lazy {
+        Room.databaseBuilder(
+            applicationContext,
+            SuperiorwallsDatabase::class.java,
+            "superiorwalls.db",
+        ).build()
+    }
+
+    val wallpaperRepository: WallpaperRepository by lazy {
+        RoomWallpaperRepository(applicationContext, database)
+    }
+
+    fun initialize(context: Context) {
+        applicationContext = context.applicationContext
+    }
 }
