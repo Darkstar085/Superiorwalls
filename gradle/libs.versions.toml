@@ -11,6 +11,7 @@ retrofit = "3.0.0"
 gson = "2.13.1"
 ksp = "2.3.11"
 room = "3.0.2"
+palette = "1.0.0"
 junit = "4.13.2"
 
 [libraries]
@@ -25,6 +26,7 @@ androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }
 androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
+androidx-palette = { module = "androidx.palette:palette-ktx", version.ref = "palette" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }

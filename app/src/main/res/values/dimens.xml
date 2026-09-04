@@ -1,0 +1,32 @@
+<resources>
+    <dimen name="viewer_content_padding">20dp</dimen>
+    <dimen name="viewer_action_spacing">8dp</dimen>
+    <dimen name="viewer_action_elevation">4dp</dimen>
+    <dimen name="viewer_navigation_elevation">2dp</dimen>
+    <dimen name="viewer_top_padding">12dp</dimen>
+    <dimen name="viewer_sheet_corner_radius">28dp</dimen>
+    <dimen name="viewer_sheet_padding">24dp</dimen>
+    <dimen name="viewer_color_swatches_spacing">10dp</dimen>
+    <dimen name="viewer_color_swatch_height">52dp</dimen>
+    <dimen name="viewer_navigation_button_size">48dp</dimen>
+    <dimen name="viewer_action_icon_size">24dp</dimen>
+    <dimen name="screen_padding">16dp</dimen>
+    <dimen name="screen_header_padding">16dp</dimen>
+    <dimen name="section_spacing">12dp</dimen>
+    <dimen name="compact_spacing">4dp</dimen>
+    <dimen name="grid_spacing">10dp</dimen>
+    <dimen name="chip_spacing">8dp</dimen>
+    <dimen name="filter_horizontal_padding">16dp</dimen>
+    <dimen name="filter_vertical_padding">8dp</dimen>
+    <dimen name="wallpaper_grid_min_size">150dp</dimen>
+    <dimen name="wallpaper_card_ratio">0.68</dimen>
+    <dimen name="card_corner_radius">20dp</dimen>
+    <dimen name="card_action_padding">8dp</dimen>
+    <dimen name="card_icon_padding">6dp</dimen>
+    <dimen name="bottom_nav_margin">10dp</dimen>
+    <dimen name="bottom_nav_corner_radius">28dp</dimen>
+    <dimen name="bottom_nav_height">72dp</dimen>
+    <dimen name="collection_card_height">120dp</dimen>
+    <dimen name="collection_card_corner_radius">18dp</dimen>
+    <dimen name="settings_section_spacing">20dp</dimen>
+</resources>

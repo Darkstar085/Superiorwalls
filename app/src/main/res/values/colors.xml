@@ -1,0 +1,10 @@
+<resources>
+    <color name="viewer_background">#000000</color>
+    <color name="viewer_overlay_content">#FFFFFFFF</color>
+    <color name="viewer_swatch_dark_content">#FF000000</color>
+    <color name="viewer_swatch_light_content">#FFFFFFFF</color>
+    <color name="accent_blue">#4DA3FF</color>
+    <color name="app_surface">#151A1F</color>
+    <color name="app_surface_variant">#20262D</color>
+    <color name="app_scrim">#99000000</color>
+</resources>

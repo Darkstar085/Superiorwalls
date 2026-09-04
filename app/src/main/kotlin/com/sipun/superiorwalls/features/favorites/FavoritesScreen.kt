@@ -1,9 +1,16 @@
 package com.sipun.superiorwalls.features.favorites
 
 import android.content.Context
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -11,8 +18,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.data.repository.FavoriteWallpaperStore
 import com.sipun.superiorwalls.domain.model.Wallpaper
 import com.sipun.superiorwalls.features.home.WallpaperGrid
@@ -27,17 +36,26 @@ fun FavoritesScreen(
     val favoriteUrls by store.observeFavoriteUrls().collectAsStateWithLifecycle(initialValue = store.favoriteUrls())
     val favorites = wallpapers.filter { it.url in favoriteUrls }
 
-    if (favorites.isEmpty()) {
+    Column(Modifier.fillMaxSize()) {
         Box(
-            modifier = Modifier.fillMaxSize().padding(24.dp),
-            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxWidth().padding(dimensionResource(R.dimen.screen_padding)),
         ) {
-            Text(
-                "No favorite wallpapers yet.",
-                style = MaterialTheme.typography.bodyLarge,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.compact_spacing))) {
+                Text(stringResource(R.string.favorites_title), style = MaterialTheme.typography.headlineMedium)
+                Text(stringResource(R.string.favorites_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            IconButton(onClick = {}, modifier = Modifier.align(Alignment.TopEnd)) {
+                Icon(Icons.Default.Search, contentDescription = stringResource(R.string.action_search))
+            }
         }
-    } else {
-        WallpaperGrid(favorites, onWallpaperClick)
+        if (favorites.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.favorites_empty), style = MaterialTheme.typography.bodyLarge)
+            }
+        } else {
+            WallpaperGrid(favorites, onWallpaperClick, favoriteUrls = favoriteUrls, onFavoriteToggle = { wallpaper ->
+                store.setFavorite(wallpaper.url, false)
+            })
+        }
     }
 }
