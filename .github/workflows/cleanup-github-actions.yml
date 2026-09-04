@@ -1,0 +1,42 @@
+name: Cleanup GitHub Actions
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep only the latest run for each workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api --paginate \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${REPO}/actions/runs?per_page=100" \
+            --jq '.workflow_runs[] | [.workflow_id, .id, .created_at] | @tsv' \
+            | sort -k1,1 -k3,3r \
+            | awk 'seen[$1]++ {print $2}' \
+            | while read -r run_id; do
+                gh api --method DELETE "/repos/${REPO}/actions/runs/${run_id}"
+              done
+
+      - name: Keep only the latest cache for each cache key
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api --paginate \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${REPO}/actions/caches?per_page=100" \
+            --jq '.actions_caches[] | [.key, .id, .created_at] | @tsv' \
+            | sort -k1,1 -k3,3r \
+            | awk 'seen[$1]++ {print $2}' \
+            | while read -r cache_id; do
+                gh api --method DELETE "/repos/${REPO}/actions/caches/${cache_id}"
+              done
