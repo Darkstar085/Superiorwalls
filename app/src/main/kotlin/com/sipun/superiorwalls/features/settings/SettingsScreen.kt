@@ -1,14 +1,20 @@
 package com.sipun.superiorwalls.features.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
@@ -24,44 +30,60 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.data.repository.AppSettingsStore
 import com.sipun.superiorwalls.data.repository.ThemeMode
+import kotlin.math.roundToInt
 
 @Composable
 fun SettingsScreen(store: AppSettingsStore) {
     val themeMode by remember(store) { store.observeThemeMode() }
         .collectAsStateWithLifecycle(initialValue = store.themeMode())
+    val listState = rememberLazyListState()
 
+    Box(modifier = Modifier.fillMaxSize()) {
+        SettingsContent(
+            themeMode = themeMode,
+            onThemeSelected = store::setThemeMode,
+            listState = listState,
+        )
+        SettingsCollapsingHeader(listState = listState)
+    }
+}
+
+@Composable
+private fun SettingsContent(
+    themeMode: ThemeMode,
+    onThemeSelected: (ThemeMode) -> Unit,
+    listState: LazyListState,
+) {
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            horizontal = dimensionResource(R.dimen.screen_padding),
-            vertical = dimensionResource(R.dimen.screen_padding),
+            top = 156.dp,
+            start = dimensionResource(R.dimen.screen_padding),
+            end = dimensionResource(R.dimen.screen_padding),
+            bottom = dimensionResource(R.dimen.screen_padding),
         ),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.settings_section_spacing)),
     ) {
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.compact_spacing))) {
-                Text(
-                    stringResource(R.string.settings_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                )
-                Text(
-                    stringResource(R.string.settings_subtitle),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            }
-        }
-
         item {
             SettingsSection(
                 title = stringResource(R.string.settings_appearance),
@@ -75,7 +97,7 @@ fun SettingsScreen(store: AppSettingsStore) {
                 ) {
                     ThemeModeSelector(
                         selected = themeMode,
-                        onSelected = store::setThemeMode,
+                        onSelected = onThemeSelected,
                     )
                 }
             }
@@ -139,6 +161,56 @@ fun SettingsScreen(store: AppSettingsStore) {
                 style = MaterialTheme.typography.labelMedium,
             )
         }
+    }
+}
+
+@Composable
+private fun SettingsCollapsingHeader(listState: LazyListState) {
+    var titleWidthPx by remember { mutableIntStateOf(0) }
+    val density = LocalDensity.current
+    val collapseDistancePx = with(density) { 112.dp.toPx() }
+    val scrollOffsetPx = listState.firstVisibleItemIndex * 1000f + listState.firstVisibleItemScrollOffset
+    val progress = (scrollOffsetPx / collapseDistancePx).coerceIn(0f, 1f)
+    val targetLeftPx = with(density) { 20.dp.toPx() }
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(148.dp),
+    ) {
+        val centeredLeftPx = (with(density) { maxWidth.toPx() } - titleWidthPx) / 2f
+        val titleX = (targetLeftPx - centeredLeftPx) * progress
+        val titleY = with(density) { lerp(62.dp, 8.dp, progress).toPx() }
+
+        Text(
+            text = stringResource(R.string.settings_title),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .onSizeChanged { titleWidthPx = it.width }
+                .offset {
+                    IntOffset(titleX.roundToInt(), titleY.roundToInt())
+                },
+            style = MaterialTheme.typography.headlineLarge.copy(
+                fontSize = lerp(30.sp, 22.sp, progress),
+            ),
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+        )
+
+        Text(
+            text = stringResource(R.string.settings_subtitle),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(horizontal = 20.dp)
+                .offset(y = lerp(100.dp, 42.dp, progress))
+                .graphicsLayer {
+                    alpha = 1f - progress
+                },
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+        )
     }
 }
 
