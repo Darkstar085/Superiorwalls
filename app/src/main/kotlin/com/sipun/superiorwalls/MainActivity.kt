@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.sipun.superiorwalls.ui.SuperiorwallsApp
-import com.sipun.superiorwalls.ui.theme.SuperiorwallsTheme
 
 class MainActivity : ComponentActivity() {
     private var incomingImage: Uri? = null
@@ -17,9 +16,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         incomingImage = intent.imageUri()
         setContent {
-            SuperiorwallsTheme {
-                SuperiorwallsApp(importedImage = incomingImage)
-            }
+            SuperiorwallsApp(importedImage = incomingImage)
         }
     }
 
