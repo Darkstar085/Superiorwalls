@@ -1,6 +1,9 @@
 package com.sipun.superiorwalls.data.repository
 
 import android.content.Context
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 
 class FavoriteWallpaperStore(context: Context) {
     private val preferences = context.applicationContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
@@ -8,6 +11,15 @@ class FavoriteWallpaperStore(context: Context) {
     fun isFavorite(url: String): Boolean = favoriteUrls().contains(url)
 
     fun favoriteUrls(): Set<String> = preferences.getStringSet(KEY_URLS, emptySet()).orEmpty().toSet()
+
+    fun observeFavoriteUrls(): Flow<Set<String>> = callbackFlow {
+        trySend(favoriteUrls())
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == KEY_URLS) trySend(favoriteUrls())
+        }
+        preferences.registerOnSharedPreferenceChangeListener(listener)
+        awaitClose { preferences.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
 
     fun setFavorite(url: String, favorite: Boolean) {
         val urls = favoriteUrls().toMutableSet()

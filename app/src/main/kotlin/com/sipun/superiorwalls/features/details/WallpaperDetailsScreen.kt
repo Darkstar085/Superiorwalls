@@ -1,8 +1,6 @@
 package com.sipun.superiorwalls.features.details
 
-import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,21 +12,30 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -45,26 +52,27 @@ import kotlinx.coroutines.launch
 fun WallpaperDetailsScreen(wallpaper: Wallpaper, onBack: () -> Unit) {
     val context = LocalContext.current
     val favorites = remember { FavoriteWallpaperStore(context) }
+    val favoriteUrls by favorites.observeFavoriteUrls().collectAsState(initial = favorites.favoriteUrls())
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
-    var isFavorite by remember { mutableStateOf(favorites.isFavorite(wallpaper.url)) }
     var busy by remember { mutableStateOf(false) }
+    val isFavorite = wallpaper.url in favoriteUrls
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+    Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            Box(Modifier.weight(1f).fillMaxWidth()) {
                 AsyncImage(
                     model = wallpaper.url,
                     contentDescription = wallpaper.name,
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize(),
                 )
-                TextButton(
+                IconButton(
                     onClick = onBack,
                     modifier = Modifier.statusBarsPadding().padding(8.dp),
-                ) { Text("Back") }
+                ) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                }
             }
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
@@ -80,16 +88,22 @@ fun WallpaperDetailsScreen(wallpaper: Wallpaper, onBack: () -> Unit) {
                 }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = {
-                            isFavorite = !isFavorite
-                            favorites.setFavorite(wallpaper.url, isFavorite)
-                        }) { Text(if (isFavorite) "Unfavorite" else "Favorite") }
+                        Button(onClick = { favorites.setFavorite(wallpaper.url, !isFavorite) }) {
+                            Icon(
+                                if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = null,
+                            )
+                            Text(if (isFavorite) "Unfavorite" else "Favorite", Modifier.padding(start = 8.dp))
+                        }
                         OutlinedButton(onClick = {
                             context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, wallpaper.url)
                             }, "Share wallpaper"))
-                        }) { Text("Share") }
+                        }) {
+                            Icon(Icons.Default.Share, contentDescription = null)
+                            Text("Share", Modifier.padding(start = 8.dp))
+                        }
                     }
                 }
                 item {
@@ -97,17 +111,29 @@ fun WallpaperDetailsScreen(wallpaper: Wallpaper, onBack: () -> Unit) {
                         Button(enabled = !busy, onClick = {
                             busy = true
                             scope.launch {
-                                snackbar.showSnackbar(setAsWallpaper(context, wallpaper.url) ?: "Wallpaper applied")
-                                busy = false
+                                try {
+                                    snackbar.showSnackbar(setAsWallpaper(context, wallpaper.url) ?: "Wallpaper applied")
+                                } finally {
+                                    busy = false
+                                }
                             }
-                        }) { if (busy) CircularProgressIndicator() else Text("Set wallpaper") }
-                        OutlinedButton(enabled = !busy, onClick = {
+                        }) {
+                            if (busy) CircularProgressIndicator() else Icon(Icons.Default.Wallpaper, contentDescription = null)
+                            if (!busy) Text("Set wallpaper", Modifier.padding(start = 8.dp))
+                        }
+                        OutlinedButton(enabled = !busy && wallpaper.downloadable != false, onClick = {
                             busy = true
                             scope.launch {
-                                snackbar.showSnackbar(saveToGallery(context, wallpaper.url, wallpaper.name) ?: "Saved to Pictures/Superiorwalls")
-                                busy = false
+                                try {
+                                    snackbar.showSnackbar(saveToGallery(context, wallpaper.url, wallpaper.name) ?: "Saved to Pictures/Superiorwalls")
+                                } finally {
+                                    busy = false
+                                }
                             }
-                        }) { Text("Download") }
+                        }) {
+                            Icon(Icons.Default.Download, contentDescription = null)
+                            Text("Download", Modifier.padding(start = 8.dp))
+                        }
                     }
                 }
             }
