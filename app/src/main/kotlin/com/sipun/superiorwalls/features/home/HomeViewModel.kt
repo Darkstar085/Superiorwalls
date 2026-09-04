@@ -16,19 +16,39 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     private val repository: WallpaperRepository,
 ) : ViewModel() {
+    private val _isRefreshing = MutableStateFlow(true)
+    private val _errorMessage = MutableStateFlow<String?>(null)
     private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
-            combine(repository.observeWallpapers(), repository.observeCollections()) { wallpapers, collections ->
-                HomeUiState(wallpapers = wallpapers, collections = collections, isLoading = false)
+            combine(
+                repository.observeWallpapers(),
+                repository.observeCollections(),
+                _isRefreshing,
+                _errorMessage,
+            ) { wallpapers, collections, isRefreshing, errorMessage ->
+                HomeUiState(
+                    wallpapers = wallpapers,
+                    collections = collections,
+                    isLoading = wallpapers.isEmpty() && isRefreshing,
+                    isRefreshing = isRefreshing,
+                    errorMessage = errorMessage,
+                )
             }.collect { _uiState.value = it }
         }
+        refresh()
+    }
+
+    fun refresh() {
         viewModelScope.launch {
+            _isRefreshing.value = true
+            _errorMessage.value = null
             repository.refresh().onFailure {
-                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "Could not refresh wallpapers.")
+                _errorMessage.value = "Could not refresh wallpapers. Showing saved wallpapers."
             }
+            _isRefreshing.value = false
         }
     }
 

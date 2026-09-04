@@ -50,7 +50,7 @@ class RoomWallpaperRepository(
             .filter { it.url.isNotBlank() }
             .distinctBy { it.url }
         if (remote.isNotEmpty()) {
-            dao.upsertAll(remote.map(Wallpaper::toEntity))
+            dao.replaceAll(remote.map(Wallpaper::toEntity))
         }
     }
 

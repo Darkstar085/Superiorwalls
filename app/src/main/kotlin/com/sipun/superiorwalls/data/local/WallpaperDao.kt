@@ -2,6 +2,7 @@ package com.sipun.superiorwalls.data.local
 
 import androidx.room3.Dao
 import androidx.room3.Query
+import androidx.room3.Transaction
 import androidx.room3.Upsert
 import kotlinx.coroutines.flow.Flow
 
@@ -18,4 +19,13 @@ interface WallpaperDao {
 
     @Upsert
     suspend fun upsertAll(wallpapers: List<WallpaperEntity>)
+
+    @Query("DELETE FROM wallpapers")
+    suspend fun deleteAll()
+
+    @Transaction
+    suspend fun replaceAll(wallpapers: List<WallpaperEntity>) {
+        deleteAll()
+        upsertAll(wallpapers)
+    }
 }

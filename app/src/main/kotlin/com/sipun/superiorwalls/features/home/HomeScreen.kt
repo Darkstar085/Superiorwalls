@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,9 +36,16 @@ fun HomeScreen(
 
     when {
         state.isLoading -> LoadingContent()
-        state.errorMessage != null -> ErrorContent(state.errorMessage)
-        state.wallpapers.isEmpty() -> EmptyContent()
-        else -> WallpaperGrid(state.wallpapers, onWallpaperClick)
+        else -> PullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = viewModel::refresh,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            when {
+                state.wallpapers.isEmpty() -> EmptyContent(state.errorMessage)
+                else -> WallpaperGrid(state.wallpapers, onWallpaperClick, state.errorMessage)
+            }
+        }
     }
 }
 
@@ -45,16 +53,28 @@ fun HomeScreen(
 fun WallpaperGrid(
     wallpapers: List<Wallpaper>,
     onWallpaperClick: (Wallpaper) -> Unit,
+    message: String? = null,
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 160.dp),
-        contentPadding = PaddingValues(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        items(wallpapers, key = { it.url }) { wallpaper ->
-            WallpaperCard(wallpaper, onWallpaperClick)
+    Box(Modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 160.dp),
+            contentPadding = PaddingValues(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            items(wallpapers, key = { it.url }) { wallpaper ->
+                WallpaperCard(wallpaper, onWallpaperClick)
+            }
+        }
+        if (message != null) {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(12.dp),
+            )
         }
     }
 }
@@ -81,15 +101,8 @@ private fun LoadingContent() {
 }
 
 @Composable
-private fun EmptyContent() {
+private fun EmptyContent(message: String?) {
     Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Text("No wallpapers available yet.")
-    }
-}
-
-@Composable
-private fun ErrorContent(message: String) {
-    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Text(message)
+        Text(message ?: "No wallpapers available yet.")
     }
 }
