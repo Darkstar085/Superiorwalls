@@ -8,23 +8,27 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -45,7 +49,9 @@ fun ImportedImageScreen(uri: Uri, onBack: () -> Unit) {
             TopAppBar(
                 title = { Text("Imported wallpaper") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Text("Back") }
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
                 },
             )
         },
@@ -75,27 +81,38 @@ fun ImportedImageScreen(uri: Uri, onBack: () -> Unit) {
                     onClick = {
                         busy = true
                         scope.launch {
-                            val error = setAsWallpaper(context, uri)
-                            snackbar.showSnackbar(error ?: "Wallpaper applied")
-                            busy = false
+                            try {
+                                snackbar.showSnackbar(setAsWallpaper(context, uri) ?: "Wallpaper applied")
+                            } finally {
+                                busy = false
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    if (busy) CircularProgressIndicator() else Text("Set wallpaper")
+                    if (busy) CircularProgressIndicator()
+                    else {
+                        Icon(Icons.Default.Wallpaper, contentDescription = null)
+                        Text("Set wallpaper", Modifier.padding(start = 8.dp))
+                    }
                 }
                 OutlinedButton(
                     enabled = !busy,
                     onClick = {
                         busy = true
                         scope.launch {
-                            val error = saveToGallery(context, uri, "imported-wallpaper")
-                            snackbar.showSnackbar(error ?: "Saved to Pictures/Superiorwalls")
-                            busy = false
+                            try {
+                                snackbar.showSnackbar(saveToGallery(context, uri, "imported-wallpaper") ?: "Saved to Pictures/Superiorwalls")
+                            } finally {
+                                busy = false
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Save to gallery") }
+                ) {
+                    Icon(Icons.Default.Download, contentDescription = null)
+                    Text("Save to gallery", Modifier.padding(start = 8.dp))
+                }
             }
         }
     }
