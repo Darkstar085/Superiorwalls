@@ -12,6 +12,7 @@ import coil3.request.SuccessResult
 import coil3.request.allowHardware
 import coil3.toBitmap
 import com.sipun.superiorwalls.data.repository.AppSettingsStore
+import com.sipun.superiorwalls.features.notifications.notifyWallpaperSaved
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -78,6 +79,9 @@ suspend fun saveToGallery(context: Context, source: Any, displayName: String): S
             check(bitmap.compress(Bitmap.CompressFormat.JPEG, 95, output)) { "Could not encode wallpaper" }
         } ?: error("Could not open gallery output")
         resolver.update(uri, ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }, null, null)
+        if (AppSettingsStore(context).notificationSettings().enabled) {
+            notifyWallpaperSaved(context, uri, displayName, bitmap)
+        }
         null
     }.getOrElse {
         resolver.delete(uri, null, null)

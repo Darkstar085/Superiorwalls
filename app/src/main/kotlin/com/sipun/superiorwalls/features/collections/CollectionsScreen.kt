@@ -18,7 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -68,7 +68,7 @@ private fun CollectionCard(collection: Collection, onClick: (Collection) -> Unit
                 Text(collection.displayName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimary)
                 Text(stringResource(R.string.collection_count, collection.count), color = MaterialTheme.colorScheme.onPrimary)
             }
-            Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.align(Alignment.CenterEnd).padding(dimensionResource(R.dimen.screen_padding)), tint = MaterialTheme.colorScheme.onPrimary)
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.align(Alignment.CenterEnd).padding(dimensionResource(R.dimen.screen_padding)), tint = MaterialTheme.colorScheme.onPrimary)
         }
     }
 }

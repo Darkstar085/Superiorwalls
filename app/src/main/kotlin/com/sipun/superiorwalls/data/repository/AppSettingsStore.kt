@@ -84,6 +84,23 @@ class AppSettingsStore(context: Context) {
         preferences.edit().putBoolean(KEY_SCALE_TO_FIT, enabled).apply()
     }
 
+    fun observeNotificationSettings(): Flow<NotificationSettings> = callbackFlow {
+        trySend(notificationSettings())
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key in NOTIFICATION_KEYS) trySend(notificationSettings())
+        }
+        preferences.registerOnSharedPreferenceChangeListener(listener)
+        awaitClose { preferences.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
+
+    fun notificationSettings(): NotificationSettings = NotificationSettings(
+        enabled = preferences.getBoolean(KEY_NOTIFICATIONS_ENABLED, true),
+    )
+
+    fun setNotificationsEnabled(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_NOTIFICATIONS_ENABLED, enabled).apply()
+    }
+
     companion object {
         private const val PREFERENCES_NAME = "app_settings"
         private const val KEY_THEME_MODE = "theme_mode"
@@ -94,6 +111,7 @@ class AppSettingsStore(context: Context) {
         private const val KEY_HIGH_QUALITY_THUMBNAILS = "high_quality_thumbnails"
         private const val KEY_DOWNLOAD_ON_WIFI_ONLY = "download_on_wifi_only"
         private const val KEY_SCALE_TO_FIT = "scale_to_fit"
+        private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
         private val INTERFACE_KEYS = setOf(
             KEY_AMOLED_THEME,
             KEY_MATERIAL_YOU,
@@ -105,6 +123,7 @@ class AppSettingsStore(context: Context) {
             KEY_DOWNLOAD_ON_WIFI_ONLY,
             KEY_SCALE_TO_FIT,
         )
+        private val NOTIFICATION_KEYS = setOf(KEY_NOTIFICATIONS_ENABLED)
     }
 }
 
@@ -125,4 +144,8 @@ data class StorageSettings(
     val highQualityThumbnails: Boolean,
     val downloadOnWifiOnly: Boolean,
     val scaleToFit: Boolean,
+)
+
+data class NotificationSettings(
+    val enabled: Boolean,
 )

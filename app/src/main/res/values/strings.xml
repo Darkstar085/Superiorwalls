@@ -40,6 +40,14 @@
     <string name="settings_wallpapers_saved_to_summary">Pictures/Superiorwalls</string>
     <string name="settings_clear_app_data">Clear App Data</string>
     <string name="settings_clear_app_data_summary">Clear cached images and downloaded wallpaper metadata (%1$s).</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_summary">Show a quick-panel notification after saving a wallpaper.</string>
+    <string name="settings_enable_notifications">Enable Notifications</string>
+    <string name="settings_enable_notifications_summary">Show saved-wallpaper notifications with gallery and delete actions.</string>
+    <string name="notification_channel_name">Wallpaper downloads</string>
+    <string name="notification_channel_description">Notifications for wallpapers saved to your gallery.</string>
+    <string name="notification_wallpaper_saved">Wallpaper saved to your gallery.</string>
+    <string name="notification_delete">Delete</string>
     <string name="settings_about">About</string>
     <string name="settings_about_summary">Wallpaper browsing, collections, favorites, downloads, and system wallpaper tools.</string>
     <string name="settings_version">Version 3.3.6 (336)</string>

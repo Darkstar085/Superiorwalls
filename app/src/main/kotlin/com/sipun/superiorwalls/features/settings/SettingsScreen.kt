@@ -1,6 +1,9 @@
 package com.sipun.superiorwalls.features.settings
 
+import android.Manifest
 import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,6 +33,7 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SettingsBrightness
 import androidx.compose.material.icons.filled.Storage
@@ -70,8 +74,10 @@ import com.sipun.superiorwalls.AppContainer
 import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.data.repository.AppSettingsStore
 import com.sipun.superiorwalls.data.repository.InterfaceSettings
+import com.sipun.superiorwalls.data.repository.NotificationSettings
 import com.sipun.superiorwalls.data.repository.StorageSettings
 import com.sipun.superiorwalls.data.repository.ThemeMode
+import com.sipun.superiorwalls.features.notifications.cancelWallpaperNotifications
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -79,18 +85,30 @@ import kotlin.math.roundToInt
 
 @Composable
 fun SettingsScreen(store: AppSettingsStore) {
+    val context = LocalContext.current
     val themeMode by remember(store) { store.observeThemeMode() }.collectAsStateWithLifecycle(initialValue = store.themeMode())
     val interfaceSettings by remember(store) { store.observeInterfaceSettings() }.collectAsStateWithLifecycle(initialValue = store.interfaceSettings())
     val storageSettings by remember(store) { store.observeStorageSettings() }.collectAsStateWithLifecycle(initialValue = store.storageSettings())
+    val notificationSettings by remember(store) { store.observeNotificationSettings() }.collectAsStateWithLifecycle(initialValue = store.notificationSettings())
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (!granted) store.setNotificationsEnabled(false)
+    }
     val listState = rememberLazyListState()
     Box(modifier = Modifier.fillMaxSize()) {
-        SettingsContent(themeMode, interfaceSettings, storageSettings, store::setThemeMode, store::setAmoledTheme, store::setMaterialYou, store::setColorNavigationBar, store::setAnimationsEnabled, store::setHighQualityThumbnails, store::setDownloadOnWifiOnly, store::setScaleToFit, listState)
+        SettingsContent(themeMode, interfaceSettings, storageSettings, notificationSettings, store::setThemeMode, store::setAmoledTheme, store::setMaterialYou, store::setColorNavigationBar, store::setAnimationsEnabled, store::setHighQualityThumbnails, store::setDownloadOnWifiOnly, store::setScaleToFit, { enabled ->
+            store.setNotificationsEnabled(enabled)
+            if (enabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else if (!enabled) {
+                cancelWallpaperNotifications(context)
+            }
+        }, listState)
         SettingsCollapsingHeader(listState)
     }
 }
 
 @Composable
-private fun SettingsContent(themeMode: ThemeMode, interfaceSettings: InterfaceSettings, storageSettings: StorageSettings, onThemeSelected: (ThemeMode) -> Unit, onAmoledChanged: (Boolean) -> Unit, onMaterialYouChanged: (Boolean) -> Unit, onNavigationBarChanged: (Boolean) -> Unit, onAnimationsChanged: (Boolean) -> Unit, onHighQualityChanged: (Boolean) -> Unit, onWifiOnlyChanged: (Boolean) -> Unit, onScaleToFitChanged: (Boolean) -> Unit, listState: LazyListState) {
+private fun SettingsContent(themeMode: ThemeMode, interfaceSettings: InterfaceSettings, storageSettings: StorageSettings, notificationSettings: NotificationSettings, onThemeSelected: (ThemeMode) -> Unit, onAmoledChanged: (Boolean) -> Unit, onMaterialYouChanged: (Boolean) -> Unit, onNavigationBarChanged: (Boolean) -> Unit, onAnimationsChanged: (Boolean) -> Unit, onHighQualityChanged: (Boolean) -> Unit, onWifiOnlyChanged: (Boolean) -> Unit, onScaleToFitChanged: (Boolean) -> Unit, onNotificationsChanged: (Boolean) -> Unit, listState: LazyListState) {
     var showThemeDialog by remember { mutableStateOf(false) }
     var cacheSize by remember { mutableStateOf("0 KB") }
     val context = LocalContext.current
@@ -128,6 +146,13 @@ private fun SettingsContent(themeMode: ThemeMode, interfaceSettings: InterfaceSe
                             withContext(Dispatchers.Main) { cacheSize = size }
                         }
                     }, headlineContent = { Text(stringResource(R.string.settings_clear_app_data)) }, supportingContent = { Text(stringResource(R.string.settings_clear_app_data_summary, cacheSize)) }, leadingContent = { Surface(modifier = Modifier.size(40.dp), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.errorContainer) { Icon(Icons.Default.DeleteSweep, contentDescription = null, modifier = Modifier.padding(8.dp), tint = MaterialTheme.colorScheme.onErrorContainer) } })
+                }
+            }
+        }
+        item {
+            SettingsSection(title = stringResource(R.string.settings_notifications), summary = stringResource(R.string.settings_notifications_summary)) {
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+                    SettingsSwitchRow(stringResource(R.string.settings_enable_notifications), stringResource(R.string.settings_enable_notifications_summary), notificationSettings.enabled, onNotificationsChanged, Icons.Default.Notifications)
                 }
             }
         }
