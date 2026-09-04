@@ -13,12 +13,13 @@
     <string name="settings_title">Settings</string>
     <string name="settings_subtitle">Personalize your Superiorwalls experience.</string>
     <string name="settings_appearance">Appearance</string>
-    <string name="settings_appearance_summary">Choose how the app follows your device theme.</string>
+    <string name="settings_appearance_summary">Customize the look and feel of the app.</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_summary">Choose how Superiorwalls follows your device appearance.</string>
     <string name="settings_system">System default</string>
     <string name="settings_light">Light</string>
     <string name="settings_dark">Dark</string>
-    <string name="settings_interface">Interface</string>
-    <string name="settings_interface_summary">Customize the look and feel of the app.</string>
+    <string name="settings_done">Done</string>
     <string name="settings_amoled_theme">AMOLED theme</string>
     <string name="settings_amoled_theme_summary">Use pure black backgrounds in dark mode.</string>
     <string name="settings_material_you">Material You</string>

@@ -1,5 +1,10 @@
 package com.sipun.superiorwalls.features.collections
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,13 +32,12 @@ import androidx.compose.ui.res.stringResource
 import coil3.compose.AsyncImage
 import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.domain.model.Collection
+import com.sipun.superiorwalls.ui.theme.LocalAnimationsEnabled
 
 @Composable
 fun CollectionsScreen(collections: List<Collection>, onCollectionClick: (Collection) -> Unit) {
     if (collections.isEmpty()) {
-        Box(Modifier.fillMaxSize().padding(dimensionResource(R.dimen.screen_padding)), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.collections_empty))
-        }
+        Box(Modifier.fillMaxSize().padding(dimensionResource(R.dimen.screen_padding)), contentAlignment = Alignment.Center) { Text(stringResource(R.string.collections_empty)) }
         return
     }
     LazyColumn(
@@ -53,29 +57,28 @@ fun CollectionsScreen(collections: List<Collection>, onCollectionClick: (Collect
 
 @Composable
 private fun CollectionCard(collection: Collection, onClick: (Collection) -> Unit) {
+    val animationsEnabled = LocalAnimationsEnabled.current
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick(collection) },
         shape = RoundedCornerShape(dimensionResource(R.dimen.collection_card_corner_radius)),
     ) {
         Box(Modifier.fillMaxWidth().height(dimensionResource(R.dimen.collection_card_height))) {
-            collection.cover?.let { cover ->
-                AsyncImage(
-                    model = cover.thumbnail?.takeIf { it.isNotBlank() } ?: cover.url,
-                    contentDescription = collection.displayName,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
+            collection.cover?.let { cover -> CollectionImage(cover.thumbnail?.takeIf { it.isNotBlank() } ?: cover.url, collection.displayName, animationsEnabled) }
             Column(modifier = Modifier.align(Alignment.CenterStart).padding(dimensionResource(R.dimen.screen_padding))) {
                 Text(collection.displayName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimary)
                 Text(stringResource(R.string.collection_count, collection.count), color = MaterialTheme.colorScheme.onPrimary)
             }
-            Icon(
-                Icons.Default.ArrowForward,
-                contentDescription = null,
-                modifier = Modifier.align(Alignment.CenterEnd).padding(dimensionResource(R.dimen.screen_padding)),
-                tint = MaterialTheme.colorScheme.onPrimary,
-            )
+            Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.align(Alignment.CenterEnd).padding(dimensionResource(R.dimen.screen_padding)), tint = MaterialTheme.colorScheme.onPrimary)
         }
+    }
+}
+
+@Composable
+private fun CollectionImage(model: String, description: String, animationsEnabled: Boolean) {
+    AnimatedVisibility(
+        visible = true,
+        enter = if (animationsEnabled) fadeIn(tween(220)) + scaleIn(initialScale = 0.98f, animationSpec = tween(220)) else EnterTransition.None,
+    ) {
+        AsyncImage(model = model, contentDescription = description, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
     }
 }

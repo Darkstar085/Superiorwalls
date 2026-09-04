@@ -1,5 +1,10 @@
 package com.sipun.superiorwalls.features.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,6 +47,7 @@ import coil3.compose.AsyncImage
 import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.data.repository.FavoriteWallpaperStore
 import com.sipun.superiorwalls.domain.model.Wallpaper
+import com.sipun.superiorwalls.ui.theme.LocalAnimationsEnabled
 
 @Composable
 fun HomeScreen(onWallpaperClick: (Wallpaper) -> Unit, viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)) {
@@ -69,6 +75,7 @@ fun WallpaperGrid(
     onFavoriteToggle: (Wallpaper) -> Unit = {},
     showHeader: Boolean = false,
 ) {
+    val animationsEnabled = LocalAnimationsEnabled.current
     Box(Modifier.fillMaxSize()) {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = dimensionResource(R.dimen.wallpaper_grid_min_size)),
@@ -79,7 +86,7 @@ fun WallpaperGrid(
         ) {
             if (showHeader) item(span = { GridItemSpan(maxLineSpan) }) { HomeHeader() }
             items(wallpapers, key = { it.url }) { wallpaper ->
-                WallpaperCard(wallpaper, wallpaper.url in favoriteUrls, onWallpaperClick, onFavoriteToggle)
+                WallpaperCard(wallpaper, wallpaper.url in favoriteUrls, onWallpaperClick, onFavoriteToggle, animationsEnabled)
             }
         }
         if (message != null) {
@@ -92,26 +99,33 @@ fun WallpaperGrid(
 
 @Composable
 private fun HomeHeader() {
-    Column(
-        Modifier.fillMaxWidth().padding(bottom = dimensionResource(R.dimen.section_spacing)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.compact_spacing)),
-    ) {
+    Column(Modifier.fillMaxWidth().padding(bottom = dimensionResource(R.dimen.section_spacing)), verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.compact_spacing))) {
         Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
         Text(stringResource(R.string.home_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
-private fun WallpaperCard(wallpaper: Wallpaper, isFavorite: Boolean, onClick: (Wallpaper) -> Unit, onFavoriteToggle: (Wallpaper) -> Unit) {
+private fun WallpaperCard(wallpaper: Wallpaper, isFavorite: Boolean, onClick: (Wallpaper) -> Unit, onFavoriteToggle: (Wallpaper) -> Unit, animationsEnabled: Boolean) {
     Card(Modifier.fillMaxWidth().clickable { onClick(wallpaper) }, shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius))) {
         Box {
-            AsyncImage(model = wallpaper.thumbnail?.takeIf { it.isNotBlank() } ?: wallpaper.url, contentDescription = wallpaper.name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().aspectRatio(0.68f))
+            WallpaperImage(wallpaper, animationsEnabled)
             IconButton(onClick = { onFavoriteToggle(wallpaper) }, modifier = Modifier.align(Alignment.BottomEnd).padding(dimensionResource(R.dimen.card_action_padding))) {
                 Surface(shape = CircleShape, color = colorResource(R.color.app_scrim)) {
                     Icon(if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, contentDescription = if (isFavorite) stringResource(R.string.viewer_unfavorite) else stringResource(R.string.viewer_favorite), tint = colorResource(R.color.viewer_overlay_content), modifier = Modifier.padding(dimensionResource(R.dimen.card_icon_padding)))
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun WallpaperImage(wallpaper: Wallpaper, animationsEnabled: Boolean) {
+    AnimatedVisibility(
+        visible = true,
+        enter = if (animationsEnabled) fadeIn(tween(220)) + scaleIn(initialScale = 0.98f, animationSpec = tween(220)) else EnterTransition.None,
+    ) {
+        AsyncImage(model = wallpaper.thumbnail?.takeIf { it.isNotBlank() } ?: wallpaper.url, contentDescription = wallpaper.name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().aspectRatio(0.68f))
     }
 }
 
