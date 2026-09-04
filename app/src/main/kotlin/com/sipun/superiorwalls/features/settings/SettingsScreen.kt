@@ -24,11 +24,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.FitScreen
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SettingsBrightness
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -40,9 +45,11 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,28 +66,37 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sipun.superiorwalls.AppContainer
 import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.data.repository.AppSettingsStore
 import com.sipun.superiorwalls.data.repository.InterfaceSettings
+import com.sipun.superiorwalls.data.repository.StorageSettings
 import com.sipun.superiorwalls.data.repository.ThemeMode
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 @Composable
 fun SettingsScreen(store: AppSettingsStore) {
     val themeMode by remember(store) { store.observeThemeMode() }.collectAsStateWithLifecycle(initialValue = store.themeMode())
     val interfaceSettings by remember(store) { store.observeInterfaceSettings() }.collectAsStateWithLifecycle(initialValue = store.interfaceSettings())
+    val storageSettings by remember(store) { store.observeStorageSettings() }.collectAsStateWithLifecycle(initialValue = store.storageSettings())
     val listState = rememberLazyListState()
     Box(modifier = Modifier.fillMaxSize()) {
-        SettingsContent(themeMode, interfaceSettings, store::setThemeMode, store::setAmoledTheme, store::setMaterialYou, store::setColorNavigationBar, store::setAnimationsEnabled, listState)
+        SettingsContent(themeMode, interfaceSettings, storageSettings, store::setThemeMode, store::setAmoledTheme, store::setMaterialYou, store::setColorNavigationBar, store::setAnimationsEnabled, store::setHighQualityThumbnails, store::setDownloadOnWifiOnly, store::setScaleToFit, listState)
         SettingsCollapsingHeader(listState)
     }
 }
 
 @Composable
-private fun SettingsContent(themeMode: ThemeMode, interfaceSettings: InterfaceSettings, onThemeSelected: (ThemeMode) -> Unit, onAmoledChanged: (Boolean) -> Unit, onMaterialYouChanged: (Boolean) -> Unit, onNavigationBarChanged: (Boolean) -> Unit, onAnimationsChanged: (Boolean) -> Unit, listState: LazyListState) {
+private fun SettingsContent(themeMode: ThemeMode, interfaceSettings: InterfaceSettings, storageSettings: StorageSettings, onThemeSelected: (ThemeMode) -> Unit, onAmoledChanged: (Boolean) -> Unit, onMaterialYouChanged: (Boolean) -> Unit, onNavigationBarChanged: (Boolean) -> Unit, onAnimationsChanged: (Boolean) -> Unit, onHighQualityChanged: (Boolean) -> Unit, onWifiOnlyChanged: (Boolean) -> Unit, onScaleToFitChanged: (Boolean) -> Unit, listState: LazyListState) {
     var showThemeDialog by remember { mutableStateOf(false) }
+    var cacheSize by remember { mutableStateOf("0 KB") }
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val hasTappableNavigationBar = remember(context) { hasTappableNavigationBar(context) }
+    LaunchedEffect(Unit) { cacheSize = withContext(Dispatchers.IO) { calculateCacheSize(context) } }
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
@@ -95,6 +111,23 @@ private fun SettingsContent(themeMode: ThemeMode, interfaceSettings: InterfaceSe
                     SettingsSwitchRow(stringResource(R.string.settings_material_you), stringResource(R.string.settings_material_you_summary), interfaceSettings.materialYou, onMaterialYouChanged, Icons.Default.Palette, enabled = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S)
                     if (hasTappableNavigationBar) SettingsSwitchRow(stringResource(R.string.settings_color_navigation_bar), stringResource(R.string.settings_color_navigation_bar_summary), interfaceSettings.colorNavigationBar, onNavigationBarChanged, Icons.Default.Navigation)
                     SettingsSwitchRow(stringResource(R.string.settings_animations), stringResource(R.string.settings_animations_summary), interfaceSettings.animationsEnabled, onAnimationsChanged, Icons.Default.Animation)
+                }
+            }
+        }
+        item {
+            SettingsSection(title = stringResource(R.string.settings_storage), summary = stringResource(R.string.settings_storage_summary)) {
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+                    SettingsSwitchRow(stringResource(R.string.settings_high_quality_thumbnails), stringResource(R.string.settings_high_quality_thumbnails_summary), storageSettings.highQualityThumbnails, onHighQualityChanged, Icons.Default.Storage)
+                    SettingsSwitchRow(stringResource(R.string.settings_download_wifi_only), stringResource(R.string.settings_download_wifi_only_summary), storageSettings.downloadOnWifiOnly, onWifiOnlyChanged, Icons.Default.Wifi)
+                    SettingsSwitchRow(stringResource(R.string.settings_scale_to_fit), stringResource(R.string.settings_scale_to_fit_summary), storageSettings.scaleToFit, onScaleToFitChanged, Icons.Default.FitScreen)
+                    ListItem(headlineContent = { Text(stringResource(R.string.settings_wallpapers_saved_to)) }, supportingContent = { Text(stringResource(R.string.settings_wallpapers_saved_to_summary)) }, leadingContent = { Surface(modifier = Modifier.size(40.dp), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.secondaryContainer) { Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.padding(8.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer) } })
+                    ListItem(modifier = Modifier.clickable {
+                        scope.launch(Dispatchers.IO) {
+                            AppContainer.clearLocalData(context)
+                            val size = calculateCacheSize(context)
+                            withContext(Dispatchers.Main) { cacheSize = size }
+                        }
+                    }, headlineContent = { Text(stringResource(R.string.settings_clear_app_data)) }, supportingContent = { Text(stringResource(R.string.settings_clear_app_data_summary, cacheSize)) }, leadingContent = { Surface(modifier = Modifier.size(40.dp), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.errorContainer) { Icon(Icons.Default.DeleteSweep, contentDescription = null, modifier = Modifier.padding(8.dp), tint = MaterialTheme.colorScheme.onErrorContainer) } })
                 }
             }
         }
@@ -116,6 +149,13 @@ private fun SettingsContent(themeMode: ThemeMode, interfaceSettings: InterfaceSe
         item { Text(stringResource(R.string.settings_version), modifier = Modifier.padding(horizontal = 4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium) }
     }
     if (showThemeDialog) ThemeSelectionDialog(themeMode, { onThemeSelected(it); showThemeDialog = false }, { showThemeDialog = false })
+}
+
+private fun calculateCacheSize(context: Context): String {
+    fun sizeOf(file: java.io.File): Long = if (file.isDirectory) file.listFiles()?.sumOf(::sizeOf) ?: 0L else file.length()
+    val bytes = sizeOf(context.cacheDir) + (context.externalCacheDir?.let(::sizeOf) ?: 0L)
+    val kb = bytes / 1024.0
+    return if (kb > 1024) String.format("%.2f MB", kb / 1024.0) else String.format("%.2f KB", kb)
 }
 
 private fun hasTappableNavigationBar(context: Context): Boolean {
@@ -141,22 +181,13 @@ private fun ThemeSelectionDialog(selected: ThemeMode, onSelected: (ThemeMode) ->
         ThemeMode.DARK to stringResource(R.string.settings_dark),
     )
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(
-            modifier = Modifier.fillMaxWidth().widthIn(max = 420.dp).padding(horizontal = 24.dp),
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 6.dp,
-        ) {
+        Surface(modifier = Modifier.fillMaxWidth().widthIn(max = 420.dp).padding(horizontal = 24.dp), shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, tonalElevation = 6.dp) {
             Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.headlineSmall)
                 Text(stringResource(R.string.settings_theme_summary), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(4.dp))
-                options.forEach { (mode, label) ->
-                    ThemeOptionRow(mode, label, selected == mode) { onSelected(mode) }
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_done)) }
-                }
+                options.forEach { (mode, label) -> ThemeOptionRow(mode, label, selected == mode) { onSelected(mode) } }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_done)) } }
             }
         }
     }
@@ -164,23 +195,10 @@ private fun ThemeSelectionDialog(selected: ThemeMode, onSelected: (ThemeMode) ->
 
 @Composable
 private fun ThemeOptionRow(mode: ThemeMode, label: String, selected: Boolean, onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
-    ) {
+    Surface(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick), shape = RoundedCornerShape(16.dp), color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer) {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(modifier = Modifier.size(40.dp), shape = RoundedCornerShape(12.dp), color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant) {
-                Icon(
-                    imageVector = when (mode) {
-                        ThemeMode.SYSTEM -> Icons.Default.SettingsBrightness
-                        ThemeMode.LIGHT -> Icons.Default.LightMode
-                        ThemeMode.DARK -> Icons.Default.DarkMode
-                    },
-                    contentDescription = null,
-                    modifier = Modifier.padding(8.dp),
-                    tint = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Icon(imageVector = when (mode) { ThemeMode.SYSTEM -> Icons.Default.SettingsBrightness; ThemeMode.LIGHT -> Icons.Default.LightMode; ThemeMode.DARK -> Icons.Default.DarkMode }, contentDescription = null, modifier = Modifier.padding(8.dp), tint = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text(label, modifier = Modifier.weight(1f).padding(horizontal = 12.dp), style = MaterialTheme.typography.bodyLarge)
             RadioButton(selected = selected, onClick = onClick)

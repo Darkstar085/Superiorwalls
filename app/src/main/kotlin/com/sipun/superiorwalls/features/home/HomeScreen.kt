@@ -45,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.sipun.superiorwalls.R
+import com.sipun.superiorwalls.data.repository.AppSettingsStore
 import com.sipun.superiorwalls.data.repository.FavoriteWallpaperStore
 import com.sipun.superiorwalls.domain.model.Wallpaper
 import com.sipun.superiorwalls.ui.theme.LocalAnimationsEnabled
@@ -74,8 +75,13 @@ fun WallpaperGrid(
     favoriteUrls: Set<String> = emptySet(),
     onFavoriteToggle: (Wallpaper) -> Unit = {},
     showHeader: Boolean = false,
+    highQualityThumbnails: Boolean? = null,
 ) {
     val animationsEnabled = LocalAnimationsEnabled.current
+    val context = LocalContext.current
+    val settingsStore = remember { AppSettingsStore(context) }
+    val storageSettings by settingsStore.observeStorageSettings().collectAsStateWithLifecycle(initialValue = settingsStore.storageSettings())
+    val useHighQuality = highQualityThumbnails ?: storageSettings.highQualityThumbnails
     Box(Modifier.fillMaxSize()) {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = dimensionResource(R.dimen.wallpaper_grid_min_size)),
@@ -86,7 +92,7 @@ fun WallpaperGrid(
         ) {
             if (showHeader) item(span = { GridItemSpan(maxLineSpan) }) { HomeHeader() }
             items(wallpapers, key = { it.url }) { wallpaper ->
-                WallpaperCard(wallpaper, wallpaper.url in favoriteUrls, onWallpaperClick, onFavoriteToggle, animationsEnabled)
+                WallpaperCard(wallpaper, wallpaper.url in favoriteUrls, onWallpaperClick, onFavoriteToggle, animationsEnabled, useHighQuality)
             }
         }
         if (message != null) {
@@ -106,10 +112,10 @@ private fun HomeHeader() {
 }
 
 @Composable
-private fun WallpaperCard(wallpaper: Wallpaper, isFavorite: Boolean, onClick: (Wallpaper) -> Unit, onFavoriteToggle: (Wallpaper) -> Unit, animationsEnabled: Boolean) {
+private fun WallpaperCard(wallpaper: Wallpaper, isFavorite: Boolean, onClick: (Wallpaper) -> Unit, onFavoriteToggle: (Wallpaper) -> Unit, animationsEnabled: Boolean, highQualityThumbnails: Boolean) {
     Card(Modifier.fillMaxWidth().clickable { onClick(wallpaper) }, shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius))) {
         Box {
-            WallpaperImage(wallpaper, animationsEnabled)
+            WallpaperImage(wallpaper, animationsEnabled, highQualityThumbnails)
             IconButton(onClick = { onFavoriteToggle(wallpaper) }, modifier = Modifier.align(Alignment.BottomEnd).padding(dimensionResource(R.dimen.card_action_padding))) {
                 Surface(shape = CircleShape, color = colorResource(R.color.app_scrim)) {
                     Icon(if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, contentDescription = if (isFavorite) stringResource(R.string.viewer_unfavorite) else stringResource(R.string.viewer_favorite), tint = colorResource(R.color.viewer_overlay_content), modifier = Modifier.padding(dimensionResource(R.dimen.card_icon_padding)))
@@ -120,12 +126,13 @@ private fun WallpaperCard(wallpaper: Wallpaper, isFavorite: Boolean, onClick: (W
 }
 
 @Composable
-private fun WallpaperImage(wallpaper: Wallpaper, animationsEnabled: Boolean) {
+private fun WallpaperImage(wallpaper: Wallpaper, animationsEnabled: Boolean, highQualityThumbnails: Boolean) {
     AnimatedVisibility(
         visible = true,
         enter = if (animationsEnabled) fadeIn(tween(220)) + scaleIn(initialScale = 0.98f, animationSpec = tween(220)) else EnterTransition.None,
     ) {
-        AsyncImage(model = wallpaper.thumbnail?.takeIf { it.isNotBlank() } ?: wallpaper.url, contentDescription = wallpaper.name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().aspectRatio(0.68f))
+        val model = if (highQualityThumbnails) wallpaper.url else wallpaper.thumbnail?.takeIf { it.isNotBlank() } ?: wallpaper.url
+        AsyncImage(model = model, contentDescription = wallpaper.name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().aspectRatio(0.68f))
     }
 }
 

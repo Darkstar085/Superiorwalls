@@ -11,6 +11,7 @@ import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.allowHardware
 import coil3.toBitmap
+import com.sipun.superiorwalls.data.repository.AppSettingsStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -27,9 +28,20 @@ suspend fun loadBitmap(context: Context, source: Any): Bitmap? = withContext(Dis
 
 suspend fun setAsWallpaper(context: Context, source: Any): String? = withContext(Dispatchers.IO) {
     val bitmap = loadBitmap(context, source) ?: return@withContext "Could not load wallpaper"
+    val settings = AppSettingsStore(context).storageSettings()
+    val wallpaperManager = WallpaperManager.getInstance(context)
+    val bitmapToApply = if (settings.scaleToFit) {
+        runCatching {
+            val wantedHeight = wallpaperManager.desiredMinimumHeight
+            if (wantedHeight > 0 && bitmap.height > 0) {
+                val ratio = wantedHeight / bitmap.height.toFloat()
+                Bitmap.createScaledBitmap(bitmap, (bitmap.width * ratio).toInt().coerceAtLeast(1), wantedHeight, true)
+            } else bitmap
+        }.getOrDefault(bitmap)
+    } else bitmap
     runCatching {
-        WallpaperManager.getInstance(context).setBitmap(
-            bitmap,
+        wallpaperManager.setBitmap(
+            bitmapToApply,
             null,
             true,
             WallpaperManager.FLAG_SYSTEM,
@@ -41,6 +53,10 @@ suspend fun setAsWallpaper(context: Context, source: Any): String? = withContext
 }
 
 suspend fun saveToGallery(context: Context, source: Any, displayName: String): String? = withContext(Dispatchers.IO) {
+    val settings = AppSettingsStore(context).storageSettings()
+    if (settings.downloadOnWifiOnly && !isWifiConnected(context)) {
+        return@withContext "Wi-Fi is required for downloads"
+    }
     val bitmap = loadBitmap(context, source) ?: return@withContext "Could not load wallpaper"
     val safeName = displayName
         .replace(Regex("[^A-Za-z0-9._-]"), "_")
@@ -50,10 +66,7 @@ suspend fun saveToGallery(context: Context, source: Any, displayName: String): S
     val values = ContentValues().apply {
         put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
         put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-        put(
-            MediaStore.Images.Media.RELATIVE_PATH,
-            Environment.DIRECTORY_PICTURES + "/" + GALLERY_SUBDIRECTORY,
-        )
+        put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/" + GALLERY_SUBDIRECTORY)
         put(MediaStore.Images.Media.IS_PENDING, 1)
     }
     val resolver = context.contentResolver
@@ -62,19 +75,24 @@ suspend fun saveToGallery(context: Context, source: Any, displayName: String): S
 
     runCatching {
         resolver.openOutputStream(uri)?.use { output ->
-            check(bitmap.compress(Bitmap.CompressFormat.JPEG, 95, output)) {
-                "Could not encode wallpaper"
-            }
+            check(bitmap.compress(Bitmap.CompressFormat.JPEG, 95, output)) { "Could not encode wallpaper" }
         } ?: error("Could not open gallery output")
-        resolver.update(
-            uri,
-            ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) },
-            null,
-            null,
-        )
+        resolver.update(uri, ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }, null, null)
         null
     }.getOrElse {
         resolver.delete(uri, null, null)
         it.message ?: "Could not save wallpaper"
+    }
+}
+
+@Suppress("DEPRECATION")
+private fun isWifiConnected(context: Context): Boolean {
+    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+        ?: return false
+    return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+        val network = connectivityManager.activeNetwork ?: return false
+        connectivityManager.getNetworkCapabilities(network)?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) == true
+    } else {
+        connectivityManager.activeNetworkInfo?.isConnected == true && connectivityManager.activeNetworkInfo?.type == android.net.ConnectivityManager.TYPE_WIFI
     }
 }

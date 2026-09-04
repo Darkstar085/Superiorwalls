@@ -57,6 +57,33 @@ class AppSettingsStore(context: Context) {
         preferences.edit().putBoolean(KEY_ANIMATIONS, enabled).apply()
     }
 
+    fun observeStorageSettings(): Flow<StorageSettings> = callbackFlow {
+        trySend(storageSettings())
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key in STORAGE_KEYS) trySend(storageSettings())
+        }
+        preferences.registerOnSharedPreferenceChangeListener(listener)
+        awaitClose { preferences.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
+
+    fun storageSettings(): StorageSettings = StorageSettings(
+        highQualityThumbnails = preferences.getBoolean(KEY_HIGH_QUALITY_THUMBNAILS, false),
+        downloadOnWifiOnly = preferences.getBoolean(KEY_DOWNLOAD_ON_WIFI_ONLY, true),
+        scaleToFit = preferences.getBoolean(KEY_SCALE_TO_FIT, true),
+    )
+
+    fun setHighQualityThumbnails(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_HIGH_QUALITY_THUMBNAILS, enabled).apply()
+    }
+
+    fun setDownloadOnWifiOnly(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_DOWNLOAD_ON_WIFI_ONLY, enabled).apply()
+    }
+
+    fun setScaleToFit(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_SCALE_TO_FIT, enabled).apply()
+    }
+
     companion object {
         private const val PREFERENCES_NAME = "app_settings"
         private const val KEY_THEME_MODE = "theme_mode"
@@ -64,11 +91,19 @@ class AppSettingsStore(context: Context) {
         private const val KEY_MATERIAL_YOU = "material_you"
         private const val KEY_COLOR_NAVIGATION_BAR = "color_navigation_bar"
         private const val KEY_ANIMATIONS = "animations"
+        private const val KEY_HIGH_QUALITY_THUMBNAILS = "high_quality_thumbnails"
+        private const val KEY_DOWNLOAD_ON_WIFI_ONLY = "download_on_wifi_only"
+        private const val KEY_SCALE_TO_FIT = "scale_to_fit"
         private val INTERFACE_KEYS = setOf(
             KEY_AMOLED_THEME,
             KEY_MATERIAL_YOU,
             KEY_COLOR_NAVIGATION_BAR,
             KEY_ANIMATIONS,
+        )
+        private val STORAGE_KEYS = setOf(
+            KEY_HIGH_QUALITY_THUMBNAILS,
+            KEY_DOWNLOAD_ON_WIFI_ONLY,
+            KEY_SCALE_TO_FIT,
         )
     }
 }
@@ -84,4 +119,10 @@ data class InterfaceSettings(
     val materialYou: Boolean,
     val colorNavigationBar: Boolean,
     val animationsEnabled: Boolean,
+)
+
+data class StorageSettings(
+    val highQualityThumbnails: Boolean,
+    val downloadOnWifiOnly: Boolean,
+    val scaleToFit: Boolean,
 )

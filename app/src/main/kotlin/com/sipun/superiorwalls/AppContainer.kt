@@ -23,4 +23,10 @@ object AppContainer {
     fun initialize(context: Context) {
         applicationContext = context.applicationContext
     }
+
+    fun clearLocalData(context: Context) {
+        database.clearAllTables()
+        runCatching { context.cacheDir.deleteRecursively() }
+        runCatching { context.externalCacheDir?.deleteRecursively() }
+    }
 }
