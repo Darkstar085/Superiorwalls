@@ -1,14 +1,21 @@
 package com.sipun.superiorwalls.ui
 
 import android.net.Uri
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
@@ -31,90 +38,87 @@ fun SuperiorwallsApp(importedImage: Uri? = null) {
     val navController = rememberNavController()
     val repository = AppContainer.wallpaperRepository
     val context = LocalContext.current
-    val topLevelDestinations = listOf(AppDestination.Home, AppDestination.Collections, AppDestination.Favorites)
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = backStackEntry?.destination
-    val showNavigation = topLevelDestinations.any { destination ->
-        currentDestination?.hierarchy?.any { it.route == destination.route } == true
-    }
+    val destinations = listOf(AppDestination.Home, AppDestination.Collections, AppDestination.Favorites)
+    val entry by navController.currentBackStackEntryAsState()
+    val current = entry?.destination
+    val showNavigation = destinations.any { current?.hierarchy?.any { node -> node.route == it.route } == true }
+    val useRail = LocalConfiguration.current.screenWidthDp >= 840
 
     Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
         bottomBar = {
-            if (showNavigation) {
+            if (showNavigation && !useRail) {
                 NavigationBar {
-                    topLevelDestinations.forEach { destination ->
+                    destinations.forEach { destination ->
                         NavigationBarItem(
-                            selected = currentDestination?.hierarchy?.any { it.route == destination.route } == true,
-                            onClick = {
-                                navController.navigate(destination.route) {
-                                    popUpTo(AppDestination.Home.route) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = { Text(destination.label.take(1)) },
+                            selected = current?.hierarchy?.any { it.route == destination.route } == true,
+                            onClick = { navigateTopLevel(navController, destination.route) },
+                            icon = { Icon(destination.icon, contentDescription = null) },
                             label = { Text(destination.label) },
                         )
                     }
                 }
             }
         },
+        modifier = Modifier.fillMaxSize(),
     ) { padding ->
-        NavHost(
-            navController = navController,
-            startDestination = if (importedImage != null) AppDestination.ImportedImage.route else AppDestination.Home.route,
-            modifier = Modifier.padding(padding),
-        ) {
-            composable(AppDestination.Home.route) {
-                HomeScreen(onWallpaperClick = { wallpaper ->
-                    navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
-                })
-            }
-            composable(AppDestination.Collections.route) {
-                CollectionsScreen(
-                    collections = repository.collections,
-                    onCollectionClick = { collection ->
-                        navController.navigate("${AppDestination.CollectionDetails.routeBase}/${Uri.encode(collection.name)}")
-                    },
-                )
-            }
-            composable(AppDestination.Favorites.route) {
-                FavoritesScreen(
-                    wallpapers = repository.wallpapers,
-                    context = context,
-                    onWallpaperClick = { wallpaper ->
-                        navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
-                    },
-                )
-            }
-            if (importedImage != null) {
-                composable(AppDestination.ImportedImage.route) {
-                    ImportedImageScreen(
-                        uri = importedImage,
-                        onBack = { navController.popBackStack() },
-                    )
+        androidx.compose.foundation.layout.Row(Modifier.fillMaxSize().padding(padding)) {
+            if (showNavigation && useRail) {
+                NavigationRail {
+                    destinations.forEach { destination ->
+                        NavigationRailItem(
+                            selected = current?.hierarchy?.any { it.route == destination.route } == true,
+                            onClick = { navigateTopLevel(navController, destination.route) },
+                            icon = { Icon(destination.icon, contentDescription = null) },
+                            label = { Text(destination.label) },
+                        )
+                    }
                 }
             }
-            composable(
-                route = AppDestination.CollectionDetails.route,
-                arguments = listOf(navArgument("name") { type = NavType.StringType }),
-            ) { entry ->
-                val name = entry.arguments?.getString("name")
-                val collection = repository.collections.firstOrNull { it.name == name }
-                if (collection == null) navController.popBackStack()
-                else CollectionWallpapersScreen(collection, onWallpaperClick = { wallpaper ->
-                    navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
-                })
-            }
-            composable(
-                route = AppDestination.Details.route,
-                arguments = listOf(navArgument("url") { type = NavType.StringType }),
-            ) { entry ->
-                val url = entry.arguments?.getString("url")
-                val wallpaper = url?.let(repository::findWallpaper)
-                if (wallpaper == null) navController.popBackStack()
-                else WallpaperDetailsScreen(wallpaper, onBack = { navController.popBackStack() })
+            NavHost(
+                navController = navController,
+                startDestination = if (importedImage != null) AppDestination.ImportedImage.route else AppDestination.Home.route,
+                modifier = Modifier.weight(1f),
+            ) {
+                composable(AppDestination.Home.route) {
+                    HomeScreen { wallpaper -> navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}") }
+                }
+                composable(AppDestination.Collections.route) {
+                    CollectionsScreen(repository.collections) { collection ->
+                        navController.navigate("${AppDestination.CollectionDetails.routeBase}/${Uri.encode(collection.name)}")
+                    }
+                }
+                composable(AppDestination.Favorites.route) {
+                    FavoritesScreen(repository.wallpapers, context) { wallpaper ->
+                        navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
+                    }
+                }
+                if (importedImage != null) {
+                    composable(AppDestination.ImportedImage.route) {
+                        ImportedImageScreen(importedImage) { navController.popBackStack() }
+                    }
+                }
+                composable(AppDestination.CollectionDetails.route, listOf(navArgument("name") { type = NavType.StringType })) { entry ->
+                    val collection = entry.arguments?.getString("name")?.let { name -> repository.collections.firstOrNull { it.name == name } }
+                    if (collection == null) navController.popBackStack()
+                    else CollectionWallpapersScreen(collection) { wallpaper ->
+                        navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
+                    }
+                }
+                composable(AppDestination.Details.route, listOf(navArgument("url") { type = NavType.StringType })) { entry ->
+                    val wallpaper = entry.arguments?.getString("url")?.let(repository::findWallpaper)
+                    if (wallpaper == null) navController.popBackStack()
+                    else WallpaperDetailsScreen(wallpaper) { navController.popBackStack() }
+                }
             }
         }
+    }
+}
+
+private fun navigateTopLevel(navController: androidx.navigation.NavHostController, route: String) {
+    navController.navigate(route) {
+        popUpTo(AppDestination.Home.route) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }

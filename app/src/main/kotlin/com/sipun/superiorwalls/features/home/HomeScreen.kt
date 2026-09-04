@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PullToRefreshBox
@@ -33,7 +35,6 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-
     when {
         state.isLoading -> LoadingContent()
         else -> PullToRefreshBox(
@@ -57,23 +58,19 @@ fun WallpaperGrid(
 ) {
     Box(Modifier.fillMaxSize()) {
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 160.dp),
-            contentPadding = PaddingValues(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            columns = GridCells.Adaptive(minSize = 170.dp),
+            contentPadding = PaddingValues(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
-            items(wallpapers, key = { it.url }) { wallpaper ->
-                WallpaperCard(wallpaper, onWallpaperClick)
-            }
+            items(wallpapers, key = { it.url }) { wallpaper -> WallpaperCard(wallpaper, onWallpaperClick) }
         }
         if (message != null) {
-            Text(
-                text = message,
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(12.dp),
+            AssistChip(
+                onClick = {},
+                label = { Text(message) },
+                modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
             )
         }
     }
@@ -81,28 +78,32 @@ fun WallpaperGrid(
 
 @Composable
 private fun WallpaperCard(wallpaper: Wallpaper, onClick: (Wallpaper) -> Unit) {
-    AsyncImage(
-        model = wallpaper.thumbnail?.takeIf { it.isNotBlank() } ?: wallpaper.url,
-        contentDescription = wallpaper.name,
-        contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(0.68f)
-            .clip(MaterialTheme.shapes.large)
-            .clickable { onClick(wallpaper) },
-    )
+    Card(
+        modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.extraLarge).clickable { onClick(wallpaper) },
+    ) {
+        AsyncImage(
+            model = wallpaper.thumbnail?.takeIf { it.isNotBlank() } ?: wallpaper.url,
+            contentDescription = wallpaper.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxWidth().aspectRatio(0.68f),
+        )
+        Text(
+            text = wallpaper.name,
+            style = MaterialTheme.typography.titleSmall,
+            maxLines = 1,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+        )
+    }
 }
 
 @Composable
 private fun LoadingContent() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
-    }
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
 }
 
 @Composable
 private fun EmptyContent(message: String?) {
     Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Text(message ?: "No wallpapers available yet.")
+        Text(message ?: "No wallpapers available yet.", style = MaterialTheme.typography.bodyLarge)
     }
 }

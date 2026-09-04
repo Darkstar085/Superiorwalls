@@ -15,6 +15,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -27,34 +28,35 @@ fun CollectionsScreen(
     onCollectionClick: (Collection) -> Unit,
 ) {
     if (collections.isEmpty()) {
-        Box(Modifier.fillMaxSize().padding(24.dp)) {
+        Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
             Text("No collections available yet.")
         }
         return
     }
-
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(collections, key = { it.name }) { collection ->
-            CollectionCard(collection, onCollectionClick)
+        item {
+            Column(modifier = Modifier.padding(bottom = 4.dp)) {
+                Text("Collections", style = MaterialTheme.typography.headlineMedium)
+                Text("Browse wallpapers by theme", style = MaterialTheme.typography.bodyMedium)
+            }
         }
+        items(collections, key = { it.name }) { collection -> CollectionCard(collection, onCollectionClick) }
     }
 }
 
 @Composable
 private fun CollectionCard(collection: Collection, onClick: (Collection) -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable { onClick(collection) },
-    ) {
+    Card(modifier = Modifier.fillMaxWidth().clickable { onClick(collection) }) {
         collection.cover?.let { cover ->
             AsyncImage(
                 model = cover.thumbnail?.takeIf { it.isNotBlank() } ?: cover.url,
                 contentDescription = collection.displayName,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxWidth().height(180.dp),
+                modifier = Modifier.fillMaxWidth().height(190.dp),
             )
         }
         Column(modifier = Modifier.padding(16.dp)) {
