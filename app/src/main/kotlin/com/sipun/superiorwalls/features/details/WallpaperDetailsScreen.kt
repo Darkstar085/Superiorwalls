@@ -24,8 +24,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
@@ -48,6 +48,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -131,9 +132,14 @@ fun WallpaperDetailsScreen(
     BackHandler { if (showInfo) showInfo = false else onBack() }
 
     val painter = rememberAsyncImagePainter(model = wallpaper.url)
-    LaunchedEffect(painter.state) {
-        val result = painter.state as? AsyncImagePainter.State.Success ?: return@LaunchedEffect
-        paletteColors = extractPalette(result.result.image.toBitmap())
+    val painterState by painter.state.collectAsState()
+    LaunchedEffect(painterState) {
+        when (val state = painterState) {
+            is AsyncImagePainter.State.Success -> {
+                paletteColors = extractPalette(state.result.image.toBitmap())
+            }
+            else -> Unit
+        }
     }
 
     Scaffold(
@@ -174,7 +180,7 @@ fun WallpaperDetailsScreen(
                 IconButton(
                     onClick = onBack,
                     modifier = Modifier.statusBarsPadding().padding(dimensionResource(R.dimen.viewer_top_padding)).align(Alignment.TopStart).size(dimensionResource(R.dimen.viewer_navigation_button_size)),
-                ) { Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.viewer_back), tint = colorResource(R.color.viewer_overlay_content)) }
+                ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.viewer_back), tint = colorResource(R.color.viewer_overlay_content)) }
                 ViewerNavigationButton(previous != null, true, { previous?.let(onWallpaperChange) }, Modifier.align(Alignment.CenterStart))
                 ViewerNavigationButton(next != null, false, { next?.let(onWallpaperChange) }, Modifier.align(Alignment.CenterEnd))
             }
@@ -237,7 +243,7 @@ private fun ViewerAction(modifier: Modifier, label: String, icon: androidx.compo
 private fun ViewerNavigationButton(enabled: Boolean, previous: Boolean, onClick: () -> Unit, modifier: Modifier) {
     Surface(modifier = modifier.padding(horizontal = dimensionResource(R.dimen.viewer_content_padding)), shape = CircleShape, color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = dimensionResource(R.dimen.viewer_navigation_elevation)) {
         IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(dimensionResource(R.dimen.viewer_navigation_button_size))) {
-            Icon(if (previous) Icons.Default.ArrowBack else Icons.Default.ArrowForward, contentDescription = stringResource(if (previous) R.string.viewer_previous else R.string.viewer_next))
+            Icon(if (previous) Icons.AutoMirrored.Filled.ArrowBack else Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(if (previous) R.string.viewer_previous else R.string.viewer_next))
         }
     }
 }
