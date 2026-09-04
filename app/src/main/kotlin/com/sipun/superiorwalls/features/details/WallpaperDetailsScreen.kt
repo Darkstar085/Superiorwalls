@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -47,14 +48,32 @@ import com.sipun.superiorwalls.features.system.setAsWallpaper
 import kotlinx.coroutines.launch
 
 @Composable
-fun WallpaperDetailsScreen(wallpaper: Wallpaper, onBack: () -> Unit) {
+fun WallpaperDetailsScreen(
+    wallpaper: Wallpaper,
+    wallpapers: List<Wallpaper>,
+    favoriteUrls: Set<String>,
+    mode: String = "all",
+    collectionName: String? = null,
+    onWallpaperChange: (Wallpaper) -> Unit,
+    onBack: () -> Unit,
+) {
     val context = LocalContext.current
     val favorites = remember { FavoriteWallpaperStore(context) }
-    val favoriteUrls by favorites.observeFavoriteUrls().collectAsState(initial = favorites.favoriteUrls())
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     var busy by remember { mutableStateOf(false) }
     val isFavorite = wallpaper.url in favoriteUrls
+
+    val viewerWallpapers = remember(wallpapers, favoriteUrls, mode, collectionName) {
+        when {
+            mode == "favorites" -> wallpapers.filter { it.url in favoriteUrls }
+            !collectionName.isNullOrBlank() -> wallpapers.filter { collectionName in it.collections.orEmpty() }
+            else -> wallpapers
+        }
+    }
+    val currentIndex = viewerWallpapers.indexOfFirst { it.url == wallpaper.url }
+    val previous = currentIndex.takeIf { it > 0 }?.let(viewerWallpapers::get)
+    val next = currentIndex.takeIf { it >= 0 && it < viewerWallpapers.lastIndex }?.let(viewerWallpapers::get)
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -70,6 +89,25 @@ fun WallpaperDetailsScreen(wallpaper: Wallpaper, onBack: () -> Unit) {
                     modifier = Modifier.statusBarsPadding().padding(8.dp),
                 ) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                OutlinedButton(
+                    enabled = previous != null,
+                    onClick = { previous?.let(onWallpaperChange) },
+                ) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = null)
+                    Text("Previous", Modifier.padding(start = 8.dp))
+                }
+                OutlinedButton(
+                    enabled = next != null,
+                    onClick = { next?.let(onWallpaperChange) },
+                ) {
+                    Text("Next", Modifier.padding(end = 8.dp))
+                    Icon(Icons.Default.ArrowForward, contentDescription = null)
                 }
             }
             LazyColumn(

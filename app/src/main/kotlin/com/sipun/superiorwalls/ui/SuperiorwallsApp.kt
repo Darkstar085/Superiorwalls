@@ -29,6 +29,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.sipun.superiorwalls.AppContainer
 import com.sipun.superiorwalls.data.repository.AppSettingsStore
+import com.sipun.superiorwalls.data.repository.FavoriteWallpaperStore
 import com.sipun.superiorwalls.data.repository.ThemeMode
 import com.sipun.superiorwalls.features.collections.CollectionWallpapersScreen
 import com.sipun.superiorwalls.features.collections.CollectionsScreen
@@ -46,6 +47,8 @@ fun SuperiorwallsApp(importedImage: Uri? = null) {
     val repository = AppContainer.wallpaperRepository
     val context = LocalContext.current
     val settings = remember { AppSettingsStore(context) }
+    val favorites = remember { FavoriteWallpaperStore(context) }
+    val favoriteUrls by favorites.observeFavoriteUrls().collectAsStateWithLifecycle(initialValue = favorites.favoriteUrls())
     val themeMode by settings.observeThemeMode().collectAsStateWithLifecycle(initialValue = settings.themeMode())
     val wallpapers by repository.observeWallpapers().collectAsStateWithLifecycle(initialValue = emptyList())
     val collections by repository.observeCollections().collectAsStateWithLifecycle(initialValue = emptyList())
@@ -100,7 +103,7 @@ fun SuperiorwallsApp(importedImage: Uri? = null) {
                     composable(AppDestination.Home.route) {
                         HomeScreen(
                             onWallpaperClick = { wallpaper ->
-                                navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
+                                navController.navigate(detailsRoute(wallpaper.url))
                             },
                         )
                     }
@@ -111,7 +114,7 @@ fun SuperiorwallsApp(importedImage: Uri? = null) {
                     }
                     composable(AppDestination.Favorites.route) {
                         FavoritesScreen(wallpapers, context) { wallpaper ->
-                            navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
+                            navController.navigate(detailsRoute(wallpaper.url, mode = "favorites"))
                         }
                     }
                     composable(AppDestination.Settings.route) {
@@ -126,18 +129,44 @@ fun SuperiorwallsApp(importedImage: Uri? = null) {
                         val collection = entry.arguments?.getString("name")?.let { name -> collections.firstOrNull { it.name == name } }
                         if (collection == null) navController.popBackStack()
                         else CollectionWallpapersScreen(collection) { wallpaper ->
-                            navController.navigate("${AppDestination.Details.routeBase}/${Uri.encode(wallpaper.url)}")
+                            navController.navigate(detailsRoute(wallpaper.url, collection = collection.name))
                         }
                     }
-                    composable(AppDestination.Details.route, listOf(navArgument("url") { type = NavType.StringType })) { entry ->
+                    composable(
+                        AppDestination.Details.route,
+                        listOf(
+                            navArgument("url") { type = NavType.StringType },
+                            navArgument("mode") { type = NavType.StringType; defaultValue = "all" },
+                            navArgument("collection") { type = NavType.StringType; nullable = true; defaultValue = null },
+                        ),
+                    ) { entry ->
                         val wallpaper = entry.arguments?.getString("url")?.let { url -> wallpapers.firstOrNull { it.url == url } }
+                        val mode = entry.arguments?.getString("mode") ?: "all"
+                        val collection = entry.arguments?.getString("collection")
                         if (wallpaper == null) navController.popBackStack()
-                        else WallpaperDetailsScreen(wallpaper) { navController.popBackStack() }
+                        else WallpaperDetailsScreen(
+                            wallpaper = wallpaper,
+                            wallpapers = wallpapers,
+                            favoriteUrls = favoriteUrls,
+                            mode = mode,
+                            collectionName = collection,
+                            onWallpaperChange = { next ->
+                                navController.navigate(detailsRoute(next.url, mode, collection)) {
+                                    popUpTo(AppDestination.Details.route) { inclusive = true }
+                                }
+                            },
+                            onBack = { navController.popBackStack() },
+                        )
                     }
                 }
             }
-        }
+        )
     }
+}
+
+private fun detailsRoute(url: String, mode: String = "all", collection: String? = null): String = buildString {
+    append("${AppDestination.Details.routeBase}/${Uri.encode(url)}?mode=${Uri.encode(mode)}")
+    if (collection != null) append("&collection=${Uri.encode(collection)}")
 }
 
 private fun navigateTopLevel(navController: androidx.navigation.NavHostController, route: String) {
