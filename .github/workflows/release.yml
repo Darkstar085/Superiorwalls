@@ -1,0 +1,116 @@
+name: Build & Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/build.gradle.kts'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check for version bump
+        id: version
+        shell: bash
+        run: |
+          CURRENT_VERSION="$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts | head -n 1)"
+          PREVIOUS_VERSION="$(git show HEAD^:app/build.gradle.kts 2>/dev/null | grep -oP 'versionName\s*=\s*"\K[^"]+' | head -n 1 || true)"
+
+          echo "Current version: ${CURRENT_VERSION}"
+          echo "Previous version: ${PREVIOUS_VERSION:-none}"
+
+          if [[ -z "$CURRENT_VERSION" ]]; then
+            echo "Could not determine current version. Skipping release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "### Release skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "Could not determine \`versionName\` from \`app/build.gradle.kts\`." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if [[ "$CURRENT_VERSION" == "$PREVIOUS_VERSION" ]]; then
+            echo "No version bump detected. Skipping release."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "### Release skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`versionName\` is unchanged at \`${CURRENT_VERSION}\`. No release was created." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          TAG="v${CURRENT_VERSION}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Release tag already exists: $TAG"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "### Release skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "The tag \`${TAG}\` already exists. No release was created." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "apk_name=superiorwalls-v${CURRENT_VERSION}.apk" >> "$GITHUB_OUTPUT"
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          echo "### Release detected" >> "$GITHUB_STEP_SUMMARY"
+          echo "Version bumped from \`${PREVIOUS_VERSION:-none}\` to \`${CURRENT_VERSION}\`." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set up JDK 17
+        if: steps.version.outputs.release == 'true'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        if: steps.version.outputs.release == 'true'
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '9.7.1'
+
+      - name: Build release APK
+        if: steps.version.outputs.release == 'true'
+        run: ./gradlew assembleRelease
+
+      - name: Generate changelog
+        if: steps.version.outputs.release == 'true'
+        run: |
+          PREV_TAG="$(git tag --sort=-version:refname | head -n 1 || true)"
+
+          if [[ -n "$PREV_TAG" ]]; then
+            ./scripts/generate_changelog.sh release-changelog.md "$PREV_TAG"
+          else
+            ./scripts/generate_changelog.sh release-changelog.md
+          fi
+
+      - name: Create release tag
+        if: steps.version.outputs.release == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Rename APK
+        if: steps.version.outputs.release == 'true'
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk \
+            "${{ steps.version.outputs.apk_name }}"
+
+      - name: Publish GitHub release
+        if: steps.version.outputs.release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Superiorwalls ${{ steps.version.outputs.tag }}
+          body_path: release-changelog.md
+          files: ${{ steps.version.outputs.apk_name }}
+          make_latest: true
+          token: ${{ github.token }}
