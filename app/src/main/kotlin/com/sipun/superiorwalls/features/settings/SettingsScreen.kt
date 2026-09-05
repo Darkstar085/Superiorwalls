@@ -64,6 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
@@ -123,11 +124,17 @@ private fun SettingsContent(themeMode: ThemeMode, interfaceSettings: InterfaceSe
     val scope = rememberCoroutineScope()
     val hasTappableNavigationBar = remember(context) { hasTappableNavigationBar(context) }
     val versionName = remember(context) { getAppVersionName(context) }
+    val useBottomNavigation = LocalConfiguration.current.screenWidthDp < 840
+    val bottomContentPadding = if (useBottomNavigation) {
+        dimensionResource(R.dimen.screen_padding) + dimensionResource(R.dimen.bottom_nav_height) + dimensionResource(R.dimen.bottom_nav_margin)
+    } else {
+        dimensionResource(R.dimen.screen_padding)
+    }
     LaunchedEffect(Unit) { cacheSize = withContext(Dispatchers.IO) { calculateCacheSize(context) } }
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 156.dp, start = dimensionResource(R.dimen.screen_padding), end = dimensionResource(R.dimen.screen_padding), bottom = dimensionResource(R.dimen.screen_padding)),
+        contentPadding = PaddingValues(top = 156.dp, start = dimensionResource(R.dimen.screen_padding), end = dimensionResource(R.dimen.screen_padding), bottom = bottomContentPadding),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.settings_section_spacing)),
     ) {
         item {
