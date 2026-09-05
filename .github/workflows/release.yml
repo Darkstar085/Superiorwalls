@@ -6,12 +6,19 @@ on:
       - main
     paths:
       - 'app/build.gradle.kts'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (for example, 0.6.0)'
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
   release:
+    name: Build & Create GitHub Release
     runs-on: ubuntu-latest
 
     steps:
@@ -20,97 +27,141 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check for version bump
+      - name: Read version
         id: version
         shell: bash
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
-          CURRENT_VERSION="$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts | head -n 1)"
-          PREVIOUS_VERSION="$(git show HEAD^:app/build.gradle.kts 2>/dev/null | grep -oP 'versionName\s*=\s*"\K[^"]+' | head -n 1 || true)"
+          set -euo pipefail
 
-          echo "Current version: ${CURRENT_VERSION}"
-          echo "Previous version: ${PREVIOUS_VERSION:-none}"
+          CURRENT_VERSION="$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)"
+          PREVIOUS_VERSION="$(git show HEAD^:app/build.gradle.kts 2>/dev/null | sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' | head -n 1 || true)"
 
           if [[ -z "$CURRENT_VERSION" ]]; then
-            echo "Could not determine current version. Skipping release."
-            echo "release=false" >> "$GITHUB_OUTPUT"
-            echo "### Release skipped" >> "$GITHUB_STEP_SUMMARY"
-            echo "Could not determine \`versionName\` from \`app/build.gradle.kts\`." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
+            echo "Could not determine versionName."
+            exit 1
           fi
 
-          if [[ "$CURRENT_VERSION" == "$PREVIOUS_VERSION" ]]; then
-            echo "No version bump detected. Skipping release."
+          if [[ -n "$RELEASE_VERSION" ]]; then
+            if [[ "$CURRENT_VERSION" != "$RELEASE_VERSION" ]]; then
+              echo "Requested version $RELEASE_VERSION does not match app version $CURRENT_VERSION."
+              exit 1
+            fi
+          elif [[ "$CURRENT_VERSION" == "$PREVIOUS_VERSION" ]]; then
+            echo "No version bump detected. Nothing to release."
             echo "release=false" >> "$GITHUB_OUTPUT"
-            echo "### Release skipped" >> "$GITHUB_STEP_SUMMARY"
-            echo "\`versionName\` is unchanged at \`${CURRENT_VERSION}\`. No release was created." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          TAG="v${CURRENT_VERSION}"
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Release tag already exists: $TAG"
-            echo "release=false" >> "$GITHUB_OUTPUT"
-            echo "### Release skipped" >> "$GITHUB_STEP_SUMMARY"
-            echo "The tag \`${TAG}\` already exists. No release was created." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
           echo "version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "apk_name=superiorwalls-v${CURRENT_VERSION}.apk" >> "$GITHUB_OUTPUT"
+          echo "tag=v${CURRENT_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "apk_name=Superiorwalls_v${CURRENT_VERSION}.apk" >> "$GITHUB_OUTPUT"
           echo "release=true" >> "$GITHUB_OUTPUT"
-          echo "### Release detected" >> "$GITHUB_STEP_SUMMARY"
-          echo "Version bumped from \`${PREVIOUS_VERSION:-none}\` to \`${CURRENT_VERSION}\`." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check existing release
+        if: steps.version.outputs.release == 'true'
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG already exists. Nothing to do."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Find previous release
+        if: steps.version.outputs.release == 'true' && steps.release.outputs.exists != 'true'
+        id: previous
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PREVIOUS_TAG="$(gh release list --repo "$GITHUB_REPOSITORY" --limit 1 --json tagName --jq '.[0].tagName // empty')"
+          echo "tag=$PREVIOUS_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Set up JDK 17
-        if: steps.version.outputs.release == 'true'
+        if: steps.version.outputs.release == 'true' && steps.release.outputs.exists != 'true'
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Gradle
-        if: steps.version.outputs.release == 'true'
+        if: steps.version.outputs.release == 'true' && steps.release.outputs.exists != 'true'
         uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: '9.7.1'
 
       - name: Build release APK
-        if: steps.version.outputs.release == 'true'
-        run: ./gradlew assembleRelease
-
-      - name: Generate changelog
-        if: steps.version.outputs.release == 'true'
+        if: steps.version.outputs.release == 'true' && steps.release.outputs.exists != 'true'
         run: |
-          PREV_TAG="$(git tag --sort=-version:refname | head -n 1 || true)"
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --stacktrace
 
-          if [[ -n "$PREV_TAG" ]]; then
-            ./scripts/generate_changelog.sh release-changelog.md "$PREV_TAG"
-          else
-            ./scripts/generate_changelog.sh release-changelog.md
+      - name: Prepare release APK
+        if: steps.version.outputs.release == 'true' && steps.release.outputs.exists != 'true'
+        id: apk
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          APK="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' | head -n 1)"
+
+          if [[ -z "$APK" ]]; then
+            echo "No release APK was produced."
+            find app/build/outputs/apk -type f -print
+            exit 1
           fi
 
-      - name: Create release tag
-        if: steps.version.outputs.release == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
-          git push origin "${{ steps.version.outputs.tag }}"
+          APK_NAME="${{ steps.version.outputs.apk_name }}"
+          cp "$APK" "$APK_NAME"
+          echo "path=$APK_NAME" >> "$GITHUB_OUTPUT"
 
-      - name: Rename APK
-        if: steps.version.outputs.release == 'true'
+      - name: Generate changelog
+        if: steps.version.outputs.release == 'true' && steps.release.outputs.exists != 'true'
+        env:
+          PREVIOUS_TAG: ${{ steps.previous.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
         run: |
-          cp app/build/outputs/apk/release/app-release.apk \
-            "${{ steps.version.outputs.apk_name }}"
+          set -euo pipefail
 
-      - name: Publish GitHub release
-        if: steps.version.outputs.release == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: Superiorwalls ${{ steps.version.outputs.tag }}
-          body_path: release-changelog.md
-          files: ${{ steps.version.outputs.apk_name }}
-          make_latest: true
-          token: ${{ github.token }}
+          {
+            echo "## What's Changed"
+            echo
+
+            if [[ -n "$PREVIOUS_TAG" ]]; then
+              git log --no-merges --pretty=format:'- %s ([%h](https://github.com/'"$GITHUB_REPOSITORY"'/commit/%H))' "${PREVIOUS_TAG}..HEAD"
+              echo
+              echo
+              echo "**Full Changelog:** https://github.com/${GITHUB_REPOSITORY}/compare/${PREVIOUS_TAG}...v${VERSION}"
+            else
+              git log --no-merges --pretty=format:'- %s ([%h](https://github.com/'"$GITHUB_REPOSITORY"'/commit/%H))'
+              echo
+              echo
+              echo "**Full Changelog:** https://github.com/${GITHUB_REPOSITORY}/commits/main"
+            fi
+          } > RELEASE_NOTES.md
+
+      - name: Create GitHub release
+        if: steps.version.outputs.release == 'true' && steps.release.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+          APK_PATH: ${{ steps.apk.outputs.path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" "$APK_PATH" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Superiorwalls v${VERSION}" \
+            --notes-file RELEASE_NOTES.md \
+            --latest
