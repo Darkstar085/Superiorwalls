@@ -202,23 +202,87 @@ private fun getAppVersionName(context: Context): String {
 @Composable
 private fun AboutDialog(versionName: String, onDismiss: () -> Unit) {
     val heartTransition = rememberInfiniteTransition(label = "heart")
-    val heartScale by heartTransition.animateFloat(initialValue = 0.92f, targetValue = 1.12f, animationSpec = infiniteRepeatable(tween(650), RepeatMode.Reverse), label = "heartScale")
-    val heartAlpha by heartTransition.animateFloat(initialValue = 0.78f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(650), RepeatMode.Reverse), label = "heartAlpha")
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(modifier = Modifier.fillMaxWidth().widthIn(max = 420.dp).padding(horizontal = 24.dp), shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, tonalElevation = 6.dp) {
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Image(painter = painterResource(R.drawable.about_placeholder), contentDescription = stringResource(R.string.app_name), modifier = Modifier.size(112.dp))
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
-                Spacer(modifier = Modifier.height(18.dp))
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                    Text(stringResource(R.string.about_made_with_prefix), style = MaterialTheme.typography.titleMedium)
-                    Text(text = "❤️", modifier = Modifier.graphicsLayer { scaleX = heartScale; scaleY = heartScale; alpha = heartAlpha }.padding(horizontal = 4.dp), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.about_made_with_suffix), style = MaterialTheme.typography.titleMedium)
-                }
+    val heartScale by heartTransition.animateFloat(
+        initialValue = 0.96f,
+        targetValue = 1.06f,
+        animationSpec = infiniteRepeatable(tween(750), RepeatMode.Reverse),
+        label = "heartScale",
+    )
+    val heartAlpha by heartTransition.animateFloat(
+        initialValue = 0.84f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(750), RepeatMode.Reverse),
+        label = "heartAlpha",
+    )
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+        ),
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 400.dp)
+                .padding(horizontal = 28.dp),
+            shape = RoundedCornerShape(26.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.superiorwalls_wordmark),
+                    contentDescription = stringResource(R.string.app_name),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp),
+                )
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(stringResource(R.string.about_version, versionName), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_done)) } }
+                Text(
+                    stringResource(R.string.about_tagline),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(modifier = Modifier.height(1.dp))
+                Text(
+                    stringResource(R.string.about_tagline_os),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    stringResource(R.string.about_version, versionName),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(modifier = Modifier.height(18.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    Text("Made with", style = MaterialTheme.typography.bodyLarge)
+                    Spacer(modifier = Modifier.size(5.dp))
+                    Text(
+                        text = "❤️",
+                        modifier = Modifier.graphicsLayer {
+                            scaleX = heartScale
+                            scaleY = heartScale
+                            alpha = heartAlpha
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Spacer(modifier = Modifier.size(5.dp))
+                    Text("by Sipun", style = MaterialTheme.typography.bodyLarge)
+                }
             }
         }
     }

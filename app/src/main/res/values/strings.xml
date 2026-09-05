@@ -53,6 +53,8 @@
     <string name="about_made_with_prefix">Made with</string>
     <string name="about_made_with_suffix">by Sipun</string>
     <string name="about_version">Version %1$s</string>
+    <string name="about_tagline">A wallpaper experience</string>
+    <string name="about_tagline_os">for SuperiorOS.</string>
     <string name="settings_credits">Credits</string>
     <string name="settings_version">Version</string>
     <string name="settings_developer_name">Jahir Fiquitiva</string>
