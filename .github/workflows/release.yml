@@ -16,6 +16,12 @@ on:
 permissions:
   contents: write
 
+env:
+  ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+  ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+  ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+  ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
 jobs:
   release:
     name: Build & Create GitHub Release
@@ -58,6 +64,29 @@ jobs:
           echo "tag=v${CURRENT_VERSION}" >> "$GITHUB_OUTPUT"
           echo "apk_name=Superiorwalls_v${CURRENT_VERSION}.apk" >> "$GITHUB_OUTPUT"
           echo "release=true" >> "$GITHUB_OUTPUT"
+
+      - name: Check signing configuration
+        if: steps.version.outputs.release == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${ANDROID_KEYSTORE_BASE64:?ANDROID_KEYSTORE_BASE64 secret is required}"
+          : "${ANDROID_KEYSTORE_PASSWORD:?ANDROID_KEYSTORE_PASSWORD secret is required}"
+          : "${ANDROID_KEY_ALIAS:?ANDROID_KEY_ALIAS secret is required}"
+          : "${ANDROID_KEY_PASSWORD:?ANDROID_KEY_PASSWORD secret is required}"
+
+      - name: Decode release keystore
+        if: steps.version.outputs.release == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/superiorwalls-release.jks"
+          cat > keystore.properties <<EOF
+          storeFile=$RUNNER_TEMP/superiorwalls-release.jks
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          EOF
 
       - name: Check existing release
         if: steps.version.outputs.release == 'true'
@@ -104,6 +133,18 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew assembleRelease --stacktrace
+
+      - name: Verify APK signature
+        if: steps.version.outputs.release == 'true' && steps.release.outputs.exists != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' | head -n 1)"
+          if [[ -z "$APK" ]]; then
+            echo "No release APK was produced."
+            exit 1
+          fi
+          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)/apksigner" verify --verbose "$APK"
 
       - name: Prepare release APK
         if: steps.version.outputs.release == 'true' && steps.release.outputs.exists != 'true'
