@@ -1,31 +1,107 @@
-# Superiorwalls
 
-A clean rebuild of Superiorwalls for modern Android and Jetpack Compose.
 
-The new implementation uses the original application as a behavioral reference while rebuilding the architecture from scratch.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/9a488ea0-4553-42bd-8698-d05da80ae01e" width="180" alt="Superiorwalls logo">
+</p>
 
-## Build with Android Studio
+<p align="center">
+  <strong>Beautiful wallpapers. Simple experience.</strong>
+</p>
 
-1. Open the repository root in Android Studio.
-2. Use a recent stable Android Studio release compatible with Android Gradle Plugin 9.4.0.
-3. Make sure JDK 17 is selected for Gradle.
-4. Install Android SDK API 37 and the Android 37 build tools when Android Studio prompts you.
-5. Sync the project with Gradle files.
-6. Select the `app` run configuration and launch it on an emulator or connected device.
+<p align="center">
+  A modern Android wallpaper application built with Kotlin and Jetpack Compose.
+</p>
 
-The project uses Gradle 9.6.1, Kotlin 2.4.10, Jetpack Compose, Material 3, Room, Coil, and Retrofit.
+<p align="center">
+  <img src="https://img.shields.io/badge/Android-API%2026%2B-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android API 26+">
+  <img src="https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?style=flat-square&logo=kotlin&logoColor=white" alt="Kotlin">
+  <img src="https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose">
+  <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="MIT License">
+</p>
 
-## Included behavior
+---
 
-- Cloud wallpaper browsing with offline Room-backed caching
-- Pull-to-refresh and cached/offline states
-- Collections and collection browsing
-- Favorites
-- Wallpaper details and metadata
-- Set wallpaper and save to gallery
-- Share wallpaper URLs
-- Import images from Android image intents
-- Persistent System / Light / Dark appearance settings
-- Adaptive phone and tablet navigation
+## ✨ Features
 
-Live wallpapers and Muzei integration are intentionally out of scope for this rebuild.
+- 🖼️ Browse and discover wallpapers
+- 📚 Browse wallpapers by collections and themes
+- ❤️ Save wallpapers to Favorites
+- 👀 View wallpaper details and metadata
+- 📲 Set wallpapers directly from the app
+- 💾 Save wallpapers to the device gallery
+- 🔗 Share wallpaper URLs
+- 📥 Import images through Android image intents
+- 🎨 Material You and dynamic theming
+- 🌙 System, light, dark, and AMOLED-friendly themes
+- ✨ Configurable animations
+- 📦 Local caching for offline browsing
+- 🔄 Pull-to-refresh
+- 📱 Adaptive navigation for phones and tablets
+
+## 📸 Screenshots
+
+<p align="center">
+  <img width="4084" height="1540" alt="Superiorwalls_wide_banner_4K" src="https://github.com/user-attachments/assets/c84e8913-6b4d-4542-8bae-3c1ff9d90f0c" />
+</p>
+
+## 🧰 Tech Stack
+
+- **Kotlin**
+- **Jetpack Compose**
+- **Material 3**
+- **AndroidX**
+- **Room** for local data
+- **Coil** for image loading
+- **Retrofit** for network access
+- **KSP** for code generation
+- **Gradle**
+
+## 🚀 Quick Start
+
+### Requirements
+
+- Android Studio
+- JDK 17
+- Android SDK 37
+- Android 8.0 (API 26) or newer
+
+### Clone
+
+```bash
+git clone https://github.com/Darkstar085/Superiorwalls.git
+cd Superiorwalls
+```
+
+### Build
+
+The repository includes the Gradle wrapper.
+
+```bash
+./gradlew assembleDebug
+```
+
+For a release build:
+
+```bash
+./gradlew assembleRelease
+```
+
+The generated APK is placed under `app/build/outputs/apk/`.
+
+## 📦 Releases
+
+Download the latest APK from the repository's [Releases](https://github.com/Darkstar085/Superiorwalls-next/releases) page.
+
+## 🤝 Contributing
+
+Contributions, bug reports, and improvements are welcome. Please keep changes focused and follow the existing Kotlin and Jetpack Compose conventions.
+
+## 📄 License
+
+Superiorwalls is licensed under the [MIT License](LICENSE).
+
+---
+
+<p align="center">
+  <strong>Superiorwalls</strong> — Make your screen yours.
+</p>
