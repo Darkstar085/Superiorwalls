@@ -76,14 +76,36 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/superiorwalls-release.jks"
+          KEYSTORE="$RUNNER_TEMP/superiorwalls-release.jks"
 
-          keytool -list \
-            -keystore "$RUNNER_TEMP/superiorwalls-release.jks" \
+          if ! printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE"; then
+            echo "Signing diagnostic: ANDROID_KEYSTORE_BASE64 is not valid Base64."
+            rm -f "$KEYSTORE"
+            exit 1
+          fi
+
+          if [[ ! -s "$KEYSTORE" ]]; then
+            echo "Signing diagnostic: decoded keystore is empty."
+            rm -f "$KEYSTORE"
+            exit 1
+          fi
+
+          if ! keytool -list \
+            -keystore "$KEYSTORE" \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" >/dev/null 2>&1; then
+            echo "Signing diagnostic: keystore decoded, but the keystore password is incorrect or the keystore is invalid/corrupted."
+            exit 1
+          fi
+
+          if ! keytool -list \
+            -keystore "$KEYSTORE" \
             -storepass "$ANDROID_KEYSTORE_PASSWORD" \
-            -alias "$ANDROID_KEY_ALIAS" >/dev/null
+            -alias "$ANDROID_KEY_ALIAS" >/dev/null 2>&1; then
+            echo "Signing diagnostic: keystore password is valid, but ANDROID_KEY_ALIAS was not found in the keystore."
+            exit 1
+          fi
 
-          echo "Signing keystore decoded and verified."
+          echo "Signing diagnostic: Base64 decoded, keystore opened, password verified, and alias verified."
 
       - name: Set up JDK 17
         if: steps.version.outputs.release == 'true'
