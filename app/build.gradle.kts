@@ -4,8 +4,6 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-import java.util.Properties
-
 android {
     namespace = "com.sipun.superiorwalls"
     compileSdk = 37
@@ -20,16 +18,20 @@ android {
 
     signingConfigs {
         create("release") {
-            val signingProperties = Properties()
-            val signingPropertiesFile = rootProject.file("keystore.properties")
-            if (signingPropertiesFile.exists()) {
-                signingPropertiesFile.inputStream().use { signingProperties.load(it) }
-            }
+            val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+            val storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            val keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+            val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
 
-            storeFile = signingProperties.getProperty("storeFile")?.let { rootProject.file(it) }
-            storePassword = signingProperties.getProperty("storePassword")
-            keyAlias = signingProperties.getProperty("keyAlias")
-            keyPassword = signingProperties.getProperty("keyPassword")
+            if (!keystorePath.isNullOrBlank() &&
+                !storePassword.isNullOrBlank() &&
+                !keyAlias.isNullOrBlank() &&
+                !keyPassword.isNullOrBlank()) {
+                storeFile = file(keystorePath)
+                this.storePassword = storePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+            }
         }
     }
 
