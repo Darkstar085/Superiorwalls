@@ -40,11 +40,11 @@ import com.sipun.superiorwalls.ui.theme.LocalAnimationsEnabled
 @Composable
 fun CollectionsScreen(collections: List<Collection>, onCollectionClick: (Collection) -> Unit) {
     if (collections.isEmpty()) {
-        Box(Modifier.fillMaxSize().padding(dimensionResource(R.dimen.screen_padding)), contentAlignment = Alignment.Center) { Text(stringResource(R.string.collections_empty)) }
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(dimensionResource(R.dimen.screen_padding)), contentAlignment = Alignment.Center) { Text(stringResource(R.string.collections_empty)) }
         return
     }
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(dimensionResource(R.dimen.screen_padding)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.grid_spacing)),
     ) {

@@ -2,12 +2,17 @@ package com.sipun.superiorwalls.ui
 
 import android.app.Activity
 import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,10 +24,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
@@ -37,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
@@ -64,6 +72,7 @@ import com.sipun.superiorwalls.features.favorites.FavoritesScreen
 import com.sipun.superiorwalls.features.home.HomeScreen
 import com.sipun.superiorwalls.features.settings.SettingsScreen
 import com.sipun.superiorwalls.navigation.AppDestination
+import com.sipun.superiorwalls.ui.theme.LocalAnimationsEnabled
 import com.sipun.superiorwalls.ui.theme.SuperiorwallsTheme
 
 private fun detailsRoute(url: String, mode: String = "all", collection: String? = null): String {
@@ -129,6 +138,12 @@ fun SuperiorwallsApp() {
         colorNavigationBar = interfaceSettings.colorNavigationBar && hasTappableNavigationBar,
         animationsEnabled = interfaceSettings.animationsEnabled,
     ) {
+        val animationsEnabled = LocalAnimationsEnabled.current
+        val enter: EnterTransition = if (animationsEnabled) fadeIn(tween(430)) + slideInHorizontally(tween(430), initialOffsetX = { it }) else EnterTransition.None
+        val exit: ExitTransition = if (animationsEnabled) fadeOut(tween(350)) else ExitTransition.None
+        val popEnter: EnterTransition = if (animationsEnabled) fadeIn(tween(430)) + slideInHorizontally(tween(430), initialOffsetX = { -it }) else EnterTransition.None
+        val popExit: ExitTransition = if (animationsEnabled) fadeOut(tween(350)) else ExitTransition.None
+
         Scaffold(
             contentWindowInsets = if (isDetails) WindowInsets(0, 0, 0, 0) else WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
             modifier = Modifier.fillMaxSize(),
@@ -147,10 +162,10 @@ fun SuperiorwallsApp() {
                         navController = navController,
                         startDestination = AppDestination.Home.route,
                         modifier = Modifier.weight(1f),
-                        enterTransition = { if (interfaceSettings.animationsEnabled) fadeIn() + slideInHorizontally(initialOffsetX = { it / 8 }) else EnterTransition.None },
-                        exitTransition = { if (interfaceSettings.animationsEnabled) fadeOut() + slideOutHorizontally(targetOffsetX = { -it / 8 }) else ExitTransition.None },
-                        popEnterTransition = { if (interfaceSettings.animationsEnabled) fadeIn() + slideInHorizontally(initialOffsetX = { -it / 8 }) else EnterTransition.None },
-                        popExitTransition = { if (interfaceSettings.animationsEnabled) fadeOut() + slideOutHorizontally(targetOffsetX = { it / 8 }) else ExitTransition.None },
+                        enterTransition = { enter },
+                        exitTransition = { exit },
+                        popEnterTransition = { popEnter },
+                        popExitTransition = { popExit },
                     ) {
                         composable(AppDestination.Home.route) { HomeScreen(onWallpaperClick = { wallpaper -> navController.navigate(detailsRoute(wallpaper.url)) }) }
                         composable(AppDestination.Collections.route) { CollectionsScreen(collections) { collection -> navController.navigate("${AppDestination.CollectionDetails.routeBase}/${Uri.encode(collection.name)}") } }
@@ -168,16 +183,27 @@ fun SuperiorwallsApp() {
                         }
                     }
                 }
-                if (showNavigation && !useRail) {
-                    Surface(modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp).navigationBarsPadding(), shape = RoundedCornerShape(34.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.96f), tonalElevation = 6.dp) {
+                AnimatedVisibility(
+                    visible = showNavigation && !useRail,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    enter = if (animationsEnabled) fadeIn(tween(320)) else EnterTransition.None,
+                    exit = if (animationsEnabled) fadeOut(tween(270)) else ExitTransition.None,
+                ) {
+                    Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp).navigationBarsPadding(), shape = RoundedCornerShape(34.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.96f), tonalElevation = 6.dp) {
                         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 5.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                             destinations.forEach { destination ->
                                 val label = stringResource(destination.labelRes)
                                 val selected = current?.hierarchy?.any { it.route == destination.route } == true
-                                Surface(onClick = { navigateTopLevel(navController, destination.route) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(28.dp), color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent) {
+                                val selectedColor = MaterialTheme.colorScheme.primary
+                                val unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                val pillColor by animateColorAsState(if (selected) selectedColor.copy(alpha = 0.18f) else Color.Transparent, if (animationsEnabled) tween(320) else snap(), label = "navigation_pill")
+                                val iconColor by animateColorAsState(if (selected) selectedColor else unselectedColor, if (animationsEnabled) tween(320) else snap(), label = "navigation_icon")
+                                val iconScale by animateFloatAsState(if (selected) 1.06f else 1f, if (animationsEnabled) tween(320) else snap(), label = "navigation_icon_scale")
+                                val iconOffset by animateDpAsState(if (selected) (-1).dp else 0.dp, if (animationsEnabled) tween(320) else snap(), label = "navigation_icon_offset")
+                                Surface(onClick = { navigateTopLevel(navController, destination.route) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(28.dp), color = pillColor) {
                                     Column(modifier = Modifier.padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                        Icon(destination.icon, contentDescription = label, tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(25.dp))
-                                        Text(label, color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
+                                        Icon(destination.icon, contentDescription = label, tint = iconColor, modifier = Modifier.size(25.dp).offset(y = iconOffset).graphicsLayer(scaleX = iconScale, scaleY = iconScale))
+                                        Text(label, color = iconColor, style = MaterialTheme.typography.labelSmall)
                                     }
                                 }
                             }

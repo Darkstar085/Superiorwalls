@@ -1,6 +1,7 @@
 package com.sipun.superiorwalls.features.favorites
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +33,7 @@ fun FavoritesScreen(
     val favoriteUrls by store.observeFavoriteUrls().collectAsStateWithLifecycle(initialValue = store.favoriteUrls())
     val favorites = wallpapers.filter { it.url in favoriteUrls }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Box(modifier = Modifier.fillMaxWidth().padding(dimensionResource(R.dimen.screen_padding))) {
             Column(verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.compact_spacing))) {
                 Text(stringResource(R.string.favorites_title), style = MaterialTheme.typography.headlineMedium)
