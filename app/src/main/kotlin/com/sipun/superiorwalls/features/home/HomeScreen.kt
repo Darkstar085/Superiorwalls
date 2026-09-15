@@ -2,9 +2,11 @@ package com.sipun.superiorwalls.features.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,9 +35,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -45,10 +50,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.sipun.superiorwalls.R
-import com.sipun.superiorwalls.data.repository.AppSettingsStore
 import com.sipun.superiorwalls.data.repository.FavoriteWallpaperStore
 import com.sipun.superiorwalls.domain.model.Wallpaper
 import com.sipun.superiorwalls.ui.theme.LocalAnimationsEnabled
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Composable
 fun HomeScreen(onWallpaperClick: (Wallpaper) -> Unit, viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)) {
@@ -76,13 +82,8 @@ fun WallpaperGrid(
     favoriteUrls: Set<String> = emptySet(),
     onFavoriteToggle: (Wallpaper) -> Unit = {},
     showHeader: Boolean = false,
-    highQualityThumbnails: Boolean? = null,
 ) {
     val animationsEnabled = LocalAnimationsEnabled.current
-    val context = LocalContext.current
-    val settingsStore = remember { AppSettingsStore(context) }
-    val storageSettings by settingsStore.observeStorageSettings().collectAsStateWithLifecycle(initialValue = settingsStore.storageSettings())
-    val useHighQuality = highQualityThumbnails ?: storageSettings.highQualityThumbnails
     Box(Modifier.fillMaxSize()) {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = dimensionResource(R.dimen.wallpaper_grid_min_size)),
@@ -93,11 +94,21 @@ fun WallpaperGrid(
         ) {
             if (showHeader) item(span = { GridItemSpan(maxLineSpan) }) { HomeHeader() }
             items(wallpapers, key = { it.url }) { wallpaper ->
-                WallpaperCard(wallpaper, wallpaper.url in favoriteUrls, onWallpaperClick, onFavoriteToggle, animationsEnabled, useHighQuality)
+                WallpaperCard(wallpaper, wallpaper.url in favoriteUrls, onWallpaperClick, onFavoriteToggle, animationsEnabled)
             }
         }
         if (message != null) {
-            Surface(shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)), tonalElevation = dimensionResource(R.dimen.viewer_navigation_elevation), modifier = Modifier.align(Alignment.BottomCenter).padding(dimensionResource(R.dimen.screen_padding))) {
+            Surface(
+                shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)),
+                tonalElevation = dimensionResource(R.dimen.viewer_navigation_elevation),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(
+                        start = dimensionResource(R.dimen.screen_padding),
+                        end = dimensionResource(R.dimen.screen_padding),
+                        bottom = dimensionResource(R.dimen.bottom_nav_height) + dimensionResource(R.dimen.bottom_nav_margin) + dimensionResource(R.dimen.screen_padding),
+                    ),
+            ) {
                 Text(message, modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.screen_padding), vertical = dimensionResource(R.dimen.compact_spacing)), style = MaterialTheme.typography.labelLarge)
             }
         }
@@ -113,10 +124,10 @@ private fun HomeHeader() {
 }
 
 @Composable
-private fun WallpaperCard(wallpaper: Wallpaper, isFavorite: Boolean, onClick: (Wallpaper) -> Unit, onFavoriteToggle: (Wallpaper) -> Unit, animationsEnabled: Boolean, highQualityThumbnails: Boolean) {
+private fun WallpaperCard(wallpaper: Wallpaper, isFavorite: Boolean, onClick: (Wallpaper) -> Unit, onFavoriteToggle: (Wallpaper) -> Unit, animationsEnabled: Boolean) {
     Card(Modifier.fillMaxWidth().clickable { onClick(wallpaper) }, shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius))) {
         Box {
-            WallpaperImage(wallpaper, animationsEnabled, highQualityThumbnails)
+            WallpaperImage(wallpaper, animationsEnabled)
             IconButton(onClick = { onFavoriteToggle(wallpaper) }, modifier = Modifier.align(Alignment.BottomEnd).padding(dimensionResource(R.dimen.card_action_padding))) {
                 Surface(shape = CircleShape, color = colorResource(R.color.app_scrim)) {
                     Icon(if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, contentDescription = if (isFavorite) stringResource(R.string.viewer_unfavorite) else stringResource(R.string.viewer_favorite), tint = colorResource(R.color.viewer_overlay_content), modifier = Modifier.padding(dimensionResource(R.dimen.card_icon_padding)))
@@ -127,14 +138,41 @@ private fun WallpaperCard(wallpaper: Wallpaper, isFavorite: Boolean, onClick: (W
 }
 
 @Composable
-private fun WallpaperImage(wallpaper: Wallpaper, animationsEnabled: Boolean, highQualityThumbnails: Boolean) {
-    AnimatedVisibility(
-        visible = true,
-        enter = if (animationsEnabled) fadeIn(tween(220)) + scaleIn(initialScale = 0.98f, animationSpec = tween(220)) else EnterTransition.None,
-    ) {
-        val model = if (highQualityThumbnails) wallpaper.url else wallpaper.thumbnail?.takeIf { it.isNotBlank() } ?: wallpaper.url
-        AsyncImage(model = model, contentDescription = wallpaper.name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().aspectRatio(0.68f))
+private fun WallpaperImage(wallpaper: Wallpaper, animationsEnabled: Boolean) {
+    val context = LocalContext.current
+    val model = remember(wallpaper.url, wallpaper.thumbnail) { wallpaperPreviewUrl(wallpaper) }
+    var imageLoaded by remember(model) { mutableStateOf(false) }
+    val placeholderAlpha by animateFloatAsState(if (imageLoaded) 0f else 1f, animationSpec = tween(260), label = "preview_placeholder")
+
+    Box(Modifier.fillMaxWidth().aspectRatio(0.72f)) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .alpha(placeholderAlpha)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        )
+        AnimatedVisibility(
+            visible = true,
+            enter = if (animationsEnabled) fadeIn(tween(220)) + scaleIn(initialScale = 0.98f, animationSpec = tween(220)) else EnterTransition.None,
+        ) {
+            AsyncImage(
+                model = model,
+                contentDescription = wallpaper.name,
+                contentScale = ContentScale.Crop,
+                imageLoader = WallpaperPreviewImageLoader.get(context),
+                modifier = Modifier.fillMaxSize(),
+                onLoading = { imageLoaded = false },
+                onSuccess = { imageLoaded = true },
+                onError = { imageLoaded = false },
+            )
+        }
     }
+}
+
+private fun wallpaperPreviewUrl(wallpaper: Wallpaper): String? {
+    val sourceUrl = (wallpaper.thumbnail?.trim()?.takeIf { it.isNotEmpty() } ?: wallpaper.url.trim().takeIf { it.isNotEmpty() }) ?: return null
+    val encodedUrl = URLEncoder.encode(sourceUrl, StandardCharsets.UTF_8.name())
+    return "https://wsrv.nl/?url=$encodedUrl&w=480&output=webp&q=72"
 }
 
 @Composable private fun LoadingContent() { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }

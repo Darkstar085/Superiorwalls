@@ -27,7 +27,7 @@
     <dimen name="filter_horizontal_padding">16dp</dimen>
     <dimen name="filter_vertical_padding">8dp</dimen>
     <dimen name="wallpaper_grid_min_size">150dp</dimen>
-    <dimen name="wallpaper_card_ratio">0.68</dimen>
+    <dimen name="wallpaper_card_ratio">0.72</dimen>
     <dimen name="card_corner_radius">20dp</dimen>
     <dimen name="card_action_padding">8dp</dimen>
     <dimen name="card_icon_padding">6dp</dimen>

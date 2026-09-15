@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.sipun.superiorwalls.AppContainer
+import com.sipun.superiorwalls.data.repository.AppSettingsStore
 import com.sipun.superiorwalls.domain.repository.WallpaperRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,10 +21,11 @@ class HomeViewModel(
     private val repository: WallpaperRepository,
     private val context: Context,
 ) : ViewModel() {
+    private val settingsStore = AppSettingsStore(context)
     private val _isRefreshing = MutableStateFlow(false)
-    private val _hasLoadedRemoteData = MutableStateFlow(false)
+    private val _hasLoadedRemoteData = MutableStateFlow(settingsStore.hasLoadedRemoteWallpapers())
     private val _errorMessage = MutableStateFlow<String?>(null)
-    private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
+    private val _uiState = MutableStateFlow(HomeUiState(isLoading = !_hasLoadedRemoteData.value))
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
@@ -50,9 +52,16 @@ class HomeViewModel(
 
     fun refresh() {
         viewModelScope.launch {
-            if (!hasInternetConnection()) {
+            val hasLoadedRemoteData = _hasLoadedRemoteData.value
+            if (!hasLoadedRemoteData && !hasInternetConnection()) {
                 _isRefreshing.value = false
                 _errorMessage.value = "No network connection. Connect to the internet."
+                return@launch
+            }
+
+            if (hasLoadedRemoteData && !hasInternetConnection()) {
+                _isRefreshing.value = false
+                _errorMessage.value = "Offline · Showing cached wallpapers"
                 return@launch
             }
 
@@ -60,6 +69,7 @@ class HomeViewModel(
             _errorMessage.value = null
             repository.refresh().onSuccess {
                 _hasLoadedRemoteData.value = true
+                settingsStore.setRemoteWallpapersLoaded()
             }.onFailure {
                 _errorMessage.value = "Could not load wallpapers. Please try again."
             }

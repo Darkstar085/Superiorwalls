@@ -101,6 +101,12 @@ class AppSettingsStore(context: Context) {
         preferences.edit().putBoolean(KEY_NOTIFICATIONS_ENABLED, enabled).apply()
     }
 
+    fun hasLoadedRemoteWallpapers(): Boolean = preferences.getBoolean(KEY_REMOTE_WALLPAPERS_LOADED, false)
+
+    fun setRemoteWallpapersLoaded() {
+        preferences.edit().putBoolean(KEY_REMOTE_WALLPAPERS_LOADED, true).apply()
+    }
+
     companion object {
         private const val PREFERENCES_NAME = "app_settings"
         private const val KEY_THEME_MODE = "theme_mode"
@@ -112,6 +118,7 @@ class AppSettingsStore(context: Context) {
         private const val KEY_DOWNLOAD_ON_WIFI_ONLY = "download_on_wifi_only"
         private const val KEY_SCALE_TO_FIT = "scale_to_fit"
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
+        private const val KEY_REMOTE_WALLPAPERS_LOADED = "remote_wallpapers_loaded"
         private val INTERFACE_KEYS = setOf(
             KEY_AMOLED_THEME,
             KEY_MATERIAL_YOU,
