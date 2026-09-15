@@ -142,7 +142,7 @@ fun WallpaperDetailsScreen(
             AsyncImage(
                 model = wallpaper.url,
                 contentDescription = wallpaper.name,
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
                 onSuccess = { state ->
                     val bitmap = state.result.image.toBitmap()
@@ -153,7 +153,7 @@ fun WallpaperDetailsScreen(
                 Surface(
                     modifier = Modifier
                         .statusBarsPadding()
-                        .padding(dimensionResource(R.dimen.viewer_top_padding))
+                        .padding(start = dimensionResource(R.dimen.screen_padding), top = dimensionResource(R.dimen.viewer_top_padding))
                         .align(Alignment.TopStart)
                         .size(dimensionResource(R.dimen.viewer_navigation_button_size)),
                     shape = CircleShape,
