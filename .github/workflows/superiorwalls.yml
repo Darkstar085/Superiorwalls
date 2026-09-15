@@ -1,0 +1,169 @@
+name: Superiorwalls CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Action to run
+        required: true
+        type: choice
+        options:
+          - release
+          - debug
+          - cleanup
+      version:
+        description: Release version, for example 2.0
+        required: false
+        type: string
+
+jobs:
+  release:
+    if: inputs.action == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          current="$(sed -n 's/.*versionName = "\([^\"]*\)".*/\1/p' app/build.gradle.kts | head -n1)"
+          test -n "$current"
+          if [[ -n "$REQUESTED_VERSION" && "$current" != "$REQUESTED_VERSION" ]]; then
+            echo "Requested version $REQUESTED_VERSION does not match app version $current."
+            exit 1
+          fi
+          echo "version=$current" >> "$GITHUB_OUTPUT"
+          echo "tag=v$current" >> "$GITHUB_OUTPUT"
+
+      - name: Build signed APK
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/superiorwalls-release.jks
+        run: |
+          set -euo pipefail
+          : "${ANDROID_KEYSTORE_BASE64:?ANDROID_KEYSTORE_BASE64 secret is required}"
+          : "${ANDROID_KEYSTORE_PASSWORD:?ANDROID_KEYSTORE_PASSWORD secret is required}"
+          : "${ANDROID_KEY_ALIAS:?ANDROID_KEY_ALIAS secret is required}"
+          : "${ANDROID_KEY_PASSWORD:?ANDROID_KEY_PASSWORD secret is required}"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+          keytool -list -keystore "$ANDROID_KEYSTORE_PATH" -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" >/dev/null
+          ./gradlew assembleRelease
+
+      - name: Verify and prepare APK
+        id: apk
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          apk="$(find app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f | head -n1)"
+          test -n "$apk"
+          build_tools="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n1)"
+          "$build_tools/apksigner" verify "$apk"
+          name="Superiorwalls_v${VERSION}.apk"
+          cp "$apk" "$name"
+          echo "path=$name" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Generate release changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          previous_tag="$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName,isDraft,isPrerelease,publishedAt \
+            --jq '[.[] | select(.isDraft == false and .isPrerelease == false and .tagName != "'"$TAG"'")] | sort_by(.publishedAt) | reverse | .[0].tagName // ""')"
+          range="${previous_tag:+$previous_tag..}HEAD"
+          {
+            echo "## What's new"
+            echo
+            git log "$range" --no-merges --pretty=format:'%s' \
+              | sed -nE 's/^(feat|style|ui|fix|perf|security)(\([^)]*\))?:[[:space:]]*//p' \
+              | sed '/^[[:space:]]*$/d' \
+              | awk '!seen[$0]++ { first=toupper(substr($0,1,1)); print "- " first substr($0,2) }'
+            if [[ -n "$previous_tag" ]]; then
+              echo
+              echo "**Full Changelog:** https://github.com/${GITHUB_REPOSITORY}/compare/${previous_tag}...${TAG}"
+            fi
+          } > RELEASE_NOTES.md
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+          APK: ${{ steps.apk.outputs.path }}
+        run: |
+          gh release create "$TAG" "$APK" \
+            --title "Superiorwalls v${VERSION}" \
+            --notes-file RELEASE_NOTES.md \
+            --latest
+
+  debug:
+    if: inputs.action == 'debug'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: ./gradlew assembleDebug
+      - name: Send APK to Telegram
+        env:
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        run: |
+          set -euo pipefail
+          apk=app/build/outputs/apk/debug/app-debug.apk
+          test -f "$apk"
+          curl --fail --silent --show-error \
+            -X POST "https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument" \
+            -F "chat_id=${TG_CHAT_ID}" \
+            -F "document=@${apk}" \
+            -F "caption=Superiorwalls debug APK — ${GITHUB_SHA::7}"
+
+  cleanup:
+    if: inputs.action == 'cleanup'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Remove old workflow runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api --paginate "/repos/$REPO/actions/runs?per_page=100" \
+            --jq '.workflow_runs[] | [.workflow_id, .id, .created_at] | @tsv' \
+            | sort -k1,1 -k3,3r \
+            | awk 'seen[$1]++ {print $2}' \
+            | xargs -r -I{} gh api --method DELETE "/repos/$REPO/actions/runs/{}"
+
+      - name: Remove old caches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api --paginate "/repos/$REPO/actions/caches?per_page=100" \
+            --jq '.actions_caches[] | [.key, .id, .created_at] | @tsv' \
+            | sort -k1,1 -k3,3r \
+            | awk 'seen[$1]++ {print $2}' \
+            | xargs -r -I{} gh api --method DELETE "/repos/$REPO/actions/caches/{}"
