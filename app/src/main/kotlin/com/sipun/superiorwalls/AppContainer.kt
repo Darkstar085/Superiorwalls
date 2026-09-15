@@ -9,21 +9,24 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object AppContainer {
-    private lateinit var applicationContext: Context
+    private lateinit var context: Context
+    val applicationContext: Context
+        get() = context
+
     private val database: SuperiorwallsDatabase by lazy {
         Room.databaseBuilder(
-            applicationContext,
+            context,
             SuperiorwallsDatabase::class.java,
             "superiorwalls.db",
         ).build()
     }
 
     val wallpaperRepository: WallpaperRepository by lazy {
-        RoomWallpaperRepository(applicationContext, database)
+        RoomWallpaperRepository(context, database)
     }
 
     fun initialize(context: Context) {
-        applicationContext = context.applicationContext
+        this.context = context.applicationContext
     }
 
     suspend fun clearLocalData(context: Context) = withContext(Dispatchers.IO) {

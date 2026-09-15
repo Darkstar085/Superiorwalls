@@ -8,5 +8,6 @@ data class HomeUiState(
     val collections: List<Collection> = emptyList(),
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
+    val hasLoadedRemoteData: Boolean = false,
     val errorMessage: String? = null,
 )

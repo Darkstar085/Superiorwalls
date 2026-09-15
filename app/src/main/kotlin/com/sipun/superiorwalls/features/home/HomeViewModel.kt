@@ -1,5 +1,8 @@
 package com.sipun.superiorwalls.features.home
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -15,8 +18,10 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val repository: WallpaperRepository,
+    private val context: Context,
 ) : ViewModel() {
-    private val _isRefreshing = MutableStateFlow(true)
+    private val _isRefreshing = MutableStateFlow(false)
+    private val _hasLoadedRemoteData = MutableStateFlow(false)
     private val _errorMessage = MutableStateFlow<String?>(null)
     private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -27,13 +32,15 @@ class HomeViewModel(
                 repository.observeWallpapers(),
                 repository.observeCollections(),
                 _isRefreshing,
+                _hasLoadedRemoteData,
                 _errorMessage,
-            ) { wallpapers, collections, isRefreshing, errorMessage ->
+            ) { wallpapers, collections, isRefreshing, hasLoadedRemoteData, errorMessage ->
                 HomeUiState(
                     wallpapers = wallpapers,
                     collections = collections,
-                    isLoading = wallpapers.isEmpty() && isRefreshing,
+                    isLoading = !hasLoadedRemoteData && isRefreshing,
                     isRefreshing = isRefreshing,
+                    hasLoadedRemoteData = hasLoadedRemoteData,
                     errorMessage = errorMessage,
                 )
             }.collect { _uiState.value = it }
@@ -43,18 +50,39 @@ class HomeViewModel(
 
     fun refresh() {
         viewModelScope.launch {
+            if (!hasInternetConnection()) {
+                _isRefreshing.value = false
+                _errorMessage.value = "No network connection. Connect to the internet."
+                return@launch
+            }
+
             _isRefreshing.value = true
             _errorMessage.value = null
-            repository.refresh().onFailure {
-                _errorMessage.value = "Could not refresh wallpapers. Showing saved wallpapers."
+            repository.refresh().onSuccess {
+                _hasLoadedRemoteData.value = true
+            }.onFailure {
+                _errorMessage.value = "Could not load wallpapers. Please try again."
             }
             _isRefreshing.value = false
         }
     }
 
+    private fun hasInternetConnection(): Boolean {
+        val connectivityManager = context.getSystemService(ConnectivityManager::class.java)
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    }
+
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer { HomeViewModel(AppContainer.wallpaperRepository) }
+            initializer {
+                HomeViewModel(
+                    AppContainer.wallpaperRepository,
+                    AppContainer.applicationContext,
+                )
+            }
         }
     }
 }

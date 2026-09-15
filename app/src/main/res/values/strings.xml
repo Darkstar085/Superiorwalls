@@ -2,6 +2,8 @@
     <string name="app_name">Superiorwalls</string>
     <string name="home_subtitle">Wallpapers that inspire.</string>
     <string name="home_empty">No wallpapers available yet.</string>
+    <string name="home_no_network">No network connection. Connect to the internet.</string>
+    <string name="home_load_error">Could not load wallpapers. Please try again.</string>
     <string name="collections_title">Collections</string>
     <string name="collections_subtitle">Browse wallpapers by theme.</string>
     <string name="collections_empty">No collections available yet.</string>

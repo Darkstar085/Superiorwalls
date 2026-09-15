@@ -60,6 +60,7 @@ fun HomeScreen(onWallpaperClick: (Wallpaper) -> Unit, viewModel: HomeViewModel =
         state.isLoading -> LoadingContent()
         else -> PullToRefreshBox(isRefreshing = state.isRefreshing, onRefresh = viewModel::refresh, modifier = Modifier.fillMaxSize()) {
             when {
+                !state.hasLoadedRemoteData -> EmptyContent(state.errorMessage)
                 state.wallpapers.isEmpty() -> EmptyContent(state.errorMessage)
                 else -> WallpaperGrid(state.wallpapers, onWallpaperClick, state.errorMessage, favoriteUrls, onFavoriteToggle = { wallpaper -> favoriteStore.setFavorite(wallpaper.url, wallpaper.url !in favoriteUrls) }, showHeader = true)
             }
