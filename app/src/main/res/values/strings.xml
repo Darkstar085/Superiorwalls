@@ -3,7 +3,11 @@
     <string name="home_subtitle">Wallpapers that inspire.</string>
     <string name="home_empty">No wallpapers available yet.</string>
     <string name="home_no_network">No network connection. Connect to the internet.</string>
+    <string name="home_no_network_title">No network connection.</string>
+    <string name="home_no_network_subtitle">Connect to the internet.</string>
+    <string name="home_offline_cached">Offline · Showing cached wallpapers</string>
     <string name="home_load_error">Could not load wallpapers. Please try again.</string>
+    <string name="retry">Retry</string>
     <string name="collections_title">Collections</string>
     <string name="collections_subtitle">Browse wallpapers by theme.</string>
     <string name="collections_empty">No collections available yet.</string>
@@ -31,9 +35,7 @@
     <string name="settings_animations">Animations</string>
     <string name="settings_animations_summary">Keep interface motion and transitions enabled.</string>
     <string name="settings_storage">Storage</string>
-    <string name="settings_storage_summary">Control image quality, downloads, and local app data.</string>
-    <string name="settings_high_quality_thumbnails">High-Quality Thumbnails</string>
-    <string name="settings_high_quality_thumbnails_summary">Load full-resolution images in wallpaper grids. This uses more cache space.</string>
+    <string name="settings_storage_summary">Control downloads and local app data.</string>
     <string name="settings_download_wifi_only">Download Wallpapers on Wi-Fi Only</string>
     <string name="settings_download_wifi_only_summary">Disable to use mobile data too.</string>
     <string name="settings_scale_to_fit">Scale to Fit</string>
@@ -42,6 +44,8 @@
     <string name="settings_wallpapers_saved_to_summary">Pictures/Superiorwalls</string>
     <string name="settings_clear_app_data">Clear App Data</string>
     <string name="settings_clear_app_data_summary">Clear cached images and downloaded wallpaper metadata (%1$s).</string>
+    <string name="settings_cache_size_initial">0 KB</string>
+    <string name="settings_unknown_version">Unknown</string>
     <string name="settings_notifications">Notifications</string>
     <string name="settings_notifications_summary">Show a quick-panel notification after saving a wallpaper.</string>
     <string name="settings_enable_notifications">Enable Notifications</string>
@@ -57,12 +61,6 @@
     <string name="about_version">Version %1$s</string>
     <string name="about_tagline">A wallpaper experience</string>
     <string name="about_tagline_os">for SuperiorOS.</string>
-    <string name="settings_credits">Credits</string>
-    <string name="settings_version">Version</string>
-    <string name="settings_developer_name">Jahir Fiquitiva</string>
-    <string name="settings_developer">Superiorwalls Dashboard Developer</string>
-    <string name="settings_project_name">Sipun Ku Mahanta</string>
-    <string name="settings_project">Superiorwalls</string>
     <string name="nav_home">Home</string>
     <string name="nav_collections">Collections</string>
     <string name="nav_favorites">Favorites</string>
@@ -88,5 +86,11 @@
     <string name="viewer_applied">Wallpaper applied</string>
     <string name="viewer_saved">Saved to Pictures/Superiorwalls</string>
     <string name="viewer_unknown_author">Superiorwalls</string>
-    <string name="viewer_unknown_size">Unknown</string>
+    <string name="wallpaper_error_load">Could not load wallpaper</string>
+    <string name="wallpaper_error_apply">Could not apply wallpaper</string>
+    <string name="wallpaper_error_wifi_required">Wi-Fi is required for downloads</string>
+    <string name="wallpaper_error_create_gallery_item">Could not create gallery item</string>
+    <string name="wallpaper_error_encode">Could not encode wallpaper</string>
+    <string name="wallpaper_error_open_gallery_output">Could not open gallery output</string>
+    <string name="wallpaper_error_save">Could not save wallpaper</string>
 </resources>

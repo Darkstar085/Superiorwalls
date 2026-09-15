@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.sipun.superiorwalls.AppContainer
+import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.data.repository.AppSettingsStore
 import com.sipun.superiorwalls.domain.repository.WallpaperRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,13 +56,13 @@ class HomeViewModel(
             val hasLoadedRemoteData = _hasLoadedRemoteData.value
             if (!hasLoadedRemoteData && !hasInternetConnection()) {
                 _isRefreshing.value = false
-                _errorMessage.value = "No network connection. Connect to the internet."
+                _errorMessage.value = context.getString(R.string.home_no_network)
                 return@launch
             }
 
             if (hasLoadedRemoteData && !hasInternetConnection()) {
                 _isRefreshing.value = false
-                _errorMessage.value = "Offline · Showing cached wallpapers"
+                _errorMessage.value = context.getString(R.string.home_offline_cached)
                 return@launch
             }
 
@@ -71,7 +72,7 @@ class HomeViewModel(
                 _hasLoadedRemoteData.value = true
                 settingsStore.setRemoteWallpapersLoaded()
             }.onFailure {
-                _errorMessage.value = "Could not load wallpapers. Please try again."
+                _errorMessage.value = context.getString(R.string.home_load_error)
             }
             _isRefreshing.value = false
         }

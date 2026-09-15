@@ -67,14 +67,9 @@ class AppSettingsStore(context: Context) {
     }
 
     fun storageSettings(): StorageSettings = StorageSettings(
-        highQualityThumbnails = preferences.getBoolean(KEY_HIGH_QUALITY_THUMBNAILS, false),
         downloadOnWifiOnly = preferences.getBoolean(KEY_DOWNLOAD_ON_WIFI_ONLY, true),
         scaleToFit = preferences.getBoolean(KEY_SCALE_TO_FIT, true),
     )
-
-    fun setHighQualityThumbnails(enabled: Boolean) {
-        preferences.edit().putBoolean(KEY_HIGH_QUALITY_THUMBNAILS, enabled).apply()
-    }
 
     fun setDownloadOnWifiOnly(enabled: Boolean) {
         preferences.edit().putBoolean(KEY_DOWNLOAD_ON_WIFI_ONLY, enabled).apply()
@@ -114,7 +109,6 @@ class AppSettingsStore(context: Context) {
         private const val KEY_MATERIAL_YOU = "material_you"
         private const val KEY_COLOR_NAVIGATION_BAR = "color_navigation_bar"
         private const val KEY_ANIMATIONS = "animations"
-        private const val KEY_HIGH_QUALITY_THUMBNAILS = "high_quality_thumbnails"
         private const val KEY_DOWNLOAD_ON_WIFI_ONLY = "download_on_wifi_only"
         private const val KEY_SCALE_TO_FIT = "scale_to_fit"
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
@@ -126,7 +120,6 @@ class AppSettingsStore(context: Context) {
             KEY_ANIMATIONS,
         )
         private val STORAGE_KEYS = setOf(
-            KEY_HIGH_QUALITY_THUMBNAILS,
             KEY_DOWNLOAD_ON_WIFI_ONLY,
             KEY_SCALE_TO_FIT,
         )
@@ -148,7 +141,6 @@ data class InterfaceSettings(
 )
 
 data class StorageSettings(
-    val highQualityThumbnails: Boolean,
     val downloadOnWifiOnly: Boolean,
     val scaleToFit: Boolean,
 )

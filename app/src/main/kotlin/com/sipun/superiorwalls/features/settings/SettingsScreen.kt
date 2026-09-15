@@ -42,7 +42,6 @@ import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SettingsBrightness
-import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -103,7 +102,7 @@ fun SettingsScreen(store: AppSettingsStore) {
     }
     val listState = rememberLazyListState()
     Box(modifier = Modifier.fillMaxSize()) {
-        SettingsContent(themeMode, interfaceSettings, storageSettings, notificationSettings, store::setThemeMode, store::setAmoledTheme, store::setMaterialYou, store::setColorNavigationBar, store::setAnimationsEnabled, store::setHighQualityThumbnails, store::setDownloadOnWifiOnly, store::setScaleToFit, { enabled ->
+        SettingsContent(themeMode, interfaceSettings, storageSettings, notificationSettings, store::setThemeMode, store::setAmoledTheme, store::setMaterialYou, store::setColorNavigationBar, store::setAnimationsEnabled, store::setDownloadOnWifiOnly, store::setScaleToFit, { enabled ->
             store.setNotificationsEnabled(enabled)
             if (enabled && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -116,11 +115,11 @@ fun SettingsScreen(store: AppSettingsStore) {
 }
 
 @Composable
-private fun SettingsContent(themeMode: ThemeMode, interfaceSettings: InterfaceSettings, storageSettings: StorageSettings, notificationSettings: NotificationSettings, onThemeSelected: (ThemeMode) -> Unit, onAmoledChanged: (Boolean) -> Unit, onMaterialYouChanged: (Boolean) -> Unit, onNavigationBarChanged: (Boolean) -> Unit, onAnimationsChanged: (Boolean) -> Unit, onHighQualityChanged: (Boolean) -> Unit, onWifiOnlyChanged: (Boolean) -> Unit, onScaleToFitChanged: (Boolean) -> Unit, onNotificationsChanged: (Boolean) -> Unit, listState: LazyListState) {
+private fun SettingsContent(themeMode: ThemeMode, interfaceSettings: InterfaceSettings, storageSettings: StorageSettings, notificationSettings: NotificationSettings, onThemeSelected: (ThemeMode) -> Unit, onAmoledChanged: (Boolean) -> Unit, onMaterialYouChanged: (Boolean) -> Unit, onNavigationBarChanged: (Boolean) -> Unit, onAnimationsChanged: (Boolean) -> Unit, onWifiOnlyChanged: (Boolean) -> Unit, onScaleToFitChanged: (Boolean) -> Unit, onNotificationsChanged: (Boolean) -> Unit, listState: LazyListState) {
     var showThemeDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
-    var cacheSize by remember { mutableStateOf("0 KB") }
     val context = LocalContext.current
+    var cacheSize by remember(context) { mutableStateOf(context.getString(R.string.settings_cache_size_initial)) }
     val scope = rememberCoroutineScope()
     val hasTappableNavigationBar = remember(context) { hasTappableNavigationBar(context) }
     val versionName = remember(context) { getAppVersionName(context) }
@@ -151,7 +150,6 @@ private fun SettingsContent(themeMode: ThemeMode, interfaceSettings: InterfaceSe
         item {
             SettingsSection(title = stringResource(R.string.settings_storage), summary = stringResource(R.string.settings_storage_summary)) {
                 Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                    SettingsSwitchRow(stringResource(R.string.settings_high_quality_thumbnails), stringResource(R.string.settings_high_quality_thumbnails_summary), storageSettings.highQualityThumbnails, onHighQualityChanged, Icons.Default.Storage)
                     SettingsSwitchRow(stringResource(R.string.settings_download_wifi_only), stringResource(R.string.settings_download_wifi_only_summary), storageSettings.downloadOnWifiOnly, onWifiOnlyChanged, Icons.Default.Wifi)
                     SettingsSwitchRow(stringResource(R.string.settings_scale_to_fit), stringResource(R.string.settings_scale_to_fit_summary), storageSettings.scaleToFit, onScaleToFitChanged, Icons.Default.FitScreen)
                     ListItem(headlineContent = { Text(stringResource(R.string.settings_wallpapers_saved_to)) }, supportingContent = { Text(stringResource(R.string.settings_wallpapers_saved_to_summary)) }, leadingContent = { Surface(modifier = Modifier.size(40.dp), shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.secondaryContainer) { Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.padding(8.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer) } })
@@ -196,7 +194,7 @@ private fun getAppVersionName(context: Context): String {
         @Suppress("DEPRECATION")
         context.packageManager.getPackageInfo(context.packageName, 0)
     }
-    return packageInfo.versionName ?: "Unknown"
+    return packageInfo.versionName ?: context.getString(R.string.settings_unknown_version)
 }
 
 @Composable
@@ -269,7 +267,7 @@ private fun AboutDialog(versionName: String, onDismiss: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                 ) {
-                    Text("Made with", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.about_made_with_prefix), style = MaterialTheme.typography.bodyLarge)
                     Spacer(modifier = Modifier.size(5.dp))
                     Text(
                         text = "❤️",
@@ -281,7 +279,7 @@ private fun AboutDialog(versionName: String, onDismiss: () -> Unit) {
                         style = MaterialTheme.typography.bodyLarge,
                     )
                     Spacer(modifier = Modifier.size(5.dp))
-                    Text("by Sipun", style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.about_made_with_suffix), style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }

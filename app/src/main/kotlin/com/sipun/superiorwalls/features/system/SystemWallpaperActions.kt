@@ -11,6 +11,7 @@ import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.allowHardware
 import coil3.toBitmap
+import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.data.repository.AppSettingsStore
 import com.sipun.superiorwalls.features.notifications.notifyWallpaperSaved
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +29,7 @@ suspend fun loadBitmap(context: Context, source: Any): Bitmap? = withContext(Dis
 }
 
 suspend fun setAsWallpaper(context: Context, source: Any): String? = withContext(Dispatchers.IO) {
-    val bitmap = loadBitmap(context, source) ?: return@withContext "Could not load wallpaper"
+    val bitmap = loadBitmap(context, source) ?: return@withContext context.getString(R.string.wallpaper_error_load)
     val settings = AppSettingsStore(context).storageSettings()
     val wallpaperManager = WallpaperManager.getInstance(context)
     val bitmapToApply = if (settings.scaleToFit) {
@@ -49,16 +50,16 @@ suspend fun setAsWallpaper(context: Context, source: Any): String? = withContext
         )
     }.fold(
         onSuccess = { null },
-        onFailure = { it.message ?: "Could not apply wallpaper" },
+        onFailure = { it.message ?: context.getString(R.string.wallpaper_error_apply) },
     )
 }
 
 suspend fun saveToGallery(context: Context, source: Any, displayName: String): String? = withContext(Dispatchers.IO) {
     val settings = AppSettingsStore(context).storageSettings()
     if (settings.downloadOnWifiOnly && !isWifiConnected(context)) {
-        return@withContext "Wi-Fi is required for downloads"
+        return@withContext context.getString(R.string.wallpaper_error_wifi_required)
     }
-    val bitmap = loadBitmap(context, source) ?: return@withContext "Could not load wallpaper"
+    val bitmap = loadBitmap(context, source) ?: return@withContext context.getString(R.string.wallpaper_error_load)
     val safeName = displayName
         .replace(Regex("[^A-Za-z0-9._-]"), "_")
         .trimEnd('.')
@@ -72,12 +73,12 @@ suspend fun saveToGallery(context: Context, source: Any, displayName: String): S
     }
     val resolver = context.contentResolver
     val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-        ?: return@withContext "Could not create gallery item"
+        ?: return@withContext context.getString(R.string.wallpaper_error_create_gallery_item)
 
     runCatching {
         resolver.openOutputStream(uri)?.use { output ->
-            check(bitmap.compress(Bitmap.CompressFormat.JPEG, 95, output)) { "Could not encode wallpaper" }
-        } ?: error("Could not open gallery output")
+            check(bitmap.compress(Bitmap.CompressFormat.JPEG, 95, output)) { context.getString(R.string.wallpaper_error_encode) }
+        } ?: error(context.getString(R.string.wallpaper_error_open_gallery_output))
         resolver.update(uri, ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }, null, null)
         if (AppSettingsStore(context).notificationSettings().enabled) {
             notifyWallpaperSaved(context, uri, displayName, bitmap)
@@ -85,7 +86,7 @@ suspend fun saveToGallery(context: Context, source: Any, displayName: String): S
         null
     }.getOrElse {
         resolver.delete(uri, null, null)
-        it.message ?: "Could not save wallpaper"
+        it.message ?: context.getString(R.string.wallpaper_error_save)
     }
 }
 

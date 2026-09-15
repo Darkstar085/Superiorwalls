@@ -1,8 +1,6 @@
 package com.sipun.superiorwalls.data.repository
 
 import android.content.Context
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.sipun.superiorwalls.data.local.SuperiorwallsDatabase
 import com.sipun.superiorwalls.data.local.WallpaperEntity
 import com.sipun.superiorwalls.data.local.toDomain
@@ -49,7 +47,6 @@ class RoomWallpaperRepository(
 
     override suspend fun refresh(): Result<Unit> = refreshMutex.withLock {
         runCatching {
-            seedLocalDataIfEmpty()
             val remote = service.getJson(DATA_URL)
                 .filter { it.url.isNotBlank() }
                 .distinctBy { it.url }
@@ -59,18 +56,7 @@ class RoomWallpaperRepository(
         }
     }
 
-    private suspend fun seedLocalDataIfEmpty() {
-        if (dao.count() > 0) return
-        val json = context.assets.open(LOCAL_DATA_FILE).bufferedReader().use { it.readText() }
-        val type = object : TypeToken<List<Wallpaper>>() {}.type
-        val local = Gson().fromJson<List<Wallpaper>>(json, type).orEmpty()
-            .filter { it.url.isNotBlank() }
-            .distinctBy { it.url }
-        if (local.isNotEmpty()) dao.upsertAll(local.map(Wallpaper::toEntity))
-    }
-
     companion object {
         const val DATA_URL = "https://raw.githubusercontent.com/SuperiorOS/Superiorwalls/master/wallpaper_configV2.json"
-        private const val LOCAL_DATA_FILE = "wallpapers.json"
     }
 }
