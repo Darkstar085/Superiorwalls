@@ -3,7 +3,7 @@
     <dimen name="viewer_action_spacing">8dp</dimen>
     <dimen name="viewer_action_elevation">4dp</dimen>
     <dimen name="viewer_navigation_elevation">2dp</dimen>
-    <dimen name="viewer_top_padding">6dp</dimen>
+    <dimen name="viewer_top_padding">8dp</dimen>
     <dimen name="viewer_sheet_corner_radius">28dp</dimen>
     <dimen name="viewer_sheet_padding">24dp</dimen>
     <dimen name="viewer_color_swatches_spacing">10dp</dimen>

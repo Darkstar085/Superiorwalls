@@ -96,6 +96,7 @@ fun SuperiorwallsApp() {
     val entry by navController.currentBackStackEntryAsState()
     val current = entry?.destination
     val showNavigation = destinations.any { destination -> current?.hierarchy?.any { it.route == destination.route } == true }
+    val isDetails = current?.route?.startsWith(AppDestination.Details.routeBase) == true
     val useRail = LocalConfiguration.current.screenWidthDp >= 840
     val hasTappableNavigationBar = remember(context) { hasTappableNavigationBar(context) }
     val darkTheme = when (themeMode) {
@@ -112,7 +113,7 @@ fun SuperiorwallsApp() {
         animationsEnabled = interfaceSettings.animationsEnabled,
     ) {
         Scaffold(
-            contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
+            contentWindowInsets = if (isDetails) WindowInsets(0, 0, 0, 0) else WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
             modifier = Modifier.fillMaxSize(),
         ) { paddingValues ->
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
