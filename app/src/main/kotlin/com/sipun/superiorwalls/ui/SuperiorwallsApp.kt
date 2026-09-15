@@ -1,5 +1,6 @@
 package com.sipun.superiorwalls.ui
 
+import android.app.Activity
 import android.net.Uri
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -30,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,8 +39,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
@@ -85,6 +89,7 @@ fun SuperiorwallsApp() {
     val navController = rememberNavController()
     val repository = AppContainer.wallpaperRepository
     val context = LocalContext.current
+    val view = LocalView.current
     val settings = remember { AppSettingsStore(context) }
     val favorites = remember { FavoriteWallpaperStore(context) }
     val favoriteUrls by favorites.observeFavoriteUrls().collectAsStateWithLifecycle(initialValue = favorites.favoriteUrls())
@@ -103,6 +108,18 @@ fun SuperiorwallsApp() {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
+    }
+
+    DisposableEffect(darkTheme, isDetails) {
+        val activity = view.context as? Activity
+        if (!isDetails) {
+            activity?.window?.let { window ->
+                val controller = WindowCompat.getInsetsController(window, window.decorView)
+                controller.isAppearanceLightStatusBars = !darkTheme
+                controller.isAppearanceLightNavigationBars = !darkTheme
+            }
+        }
+        onDispose { }
     }
 
     SuperiorwallsTheme(

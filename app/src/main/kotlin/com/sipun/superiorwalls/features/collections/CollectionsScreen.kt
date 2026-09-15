@@ -5,6 +5,7 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +27,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -64,11 +67,24 @@ private fun CollectionCard(collection: Collection, onClick: (Collection) -> Unit
     ) {
         Box(Modifier.fillMaxWidth().height(dimensionResource(R.dimen.collection_card_height))) {
             collection.cover?.let { cover -> CollectionImage(cover.thumbnail?.takeIf { it.isNotBlank() } ?: cover.url, collection.displayName, animationsEnabled) }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                Color.Black.copy(alpha = 0.42f),
+                                Color.Black.copy(alpha = 0.12f),
+                                Color.Transparent,
+                            ),
+                        ),
+                    ),
+            )
             Column(modifier = Modifier.align(Alignment.CenterStart).padding(dimensionResource(R.dimen.screen_padding))) {
-                Text(collection.displayName, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimary)
-                Text(stringResource(R.string.collection_count, collection.count), color = MaterialTheme.colorScheme.onPrimary)
+                Text(collection.displayName, style = MaterialTheme.typography.titleLarge, color = Color.White)
+                Text(stringResource(R.string.collection_count, collection.count), color = Color.White)
             }
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.align(Alignment.CenterEnd).padding(dimensionResource(R.dimen.screen_padding)), tint = MaterialTheme.colorScheme.onPrimary)
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.align(Alignment.CenterEnd).padding(dimensionResource(R.dimen.screen_padding)), tint = Color.White)
         }
     }
 }
