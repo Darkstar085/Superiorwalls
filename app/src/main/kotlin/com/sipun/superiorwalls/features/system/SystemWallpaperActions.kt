@@ -28,7 +28,11 @@ suspend fun loadBitmap(context: Context, source: Any): Bitmap? = withContext(Dis
     (result as? SuccessResult)?.image?.toBitmap()
 }
 
-suspend fun setAsWallpaper(context: Context, source: Any): String? = withContext(Dispatchers.IO) {
+suspend fun setAsWallpaper(
+    context: Context,
+    source: Any,
+    which: Int = WallpaperManager.FLAG_SYSTEM,
+): String? = withContext(Dispatchers.IO) {
     val bitmap = loadBitmap(context, source) ?: return@withContext context.getString(R.string.wallpaper_error_load)
     val settings = AppSettingsStore(context).storageSettings()
     val wallpaperManager = WallpaperManager.getInstance(context)
@@ -37,7 +41,12 @@ suspend fun setAsWallpaper(context: Context, source: Any): String? = withContext
             val wantedHeight = wallpaperManager.desiredMinimumHeight
             if (wantedHeight > 0 && bitmap.height > 0) {
                 val ratio = wantedHeight / bitmap.height.toFloat()
-                Bitmap.createScaledBitmap(bitmap, (bitmap.width * ratio).toInt().coerceAtLeast(1), wantedHeight, true)
+                Bitmap.createScaledBitmap(
+                    bitmap,
+                    (bitmap.width * ratio).toInt().coerceAtLeast(1),
+                    wantedHeight,
+                    true,
+                )
             } else bitmap
         }.getOrDefault(bitmap)
     } else bitmap
@@ -46,7 +55,7 @@ suspend fun setAsWallpaper(context: Context, source: Any): String? = withContext
             bitmapToApply,
             null,
             true,
-            WallpaperManager.FLAG_SYSTEM,
+            which,
         )
     }.fold(
         onSuccess = { null },

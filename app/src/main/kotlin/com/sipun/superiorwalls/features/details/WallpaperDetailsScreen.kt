@@ -1,6 +1,7 @@
 package com.sipun.superiorwalls.features.details
 
 import android.app.Activity
+import android.app.WallpaperManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -18,7 +19,9 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -83,6 +86,7 @@ fun WallpaperDetailsScreen(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var busy by remember { mutableStateOf(false) }
     var showInfo by remember { mutableStateOf(false) }
+    var showApplySheet by remember { mutableStateOf(false) }
     var showBars by remember { mutableStateOf(true) }
     var paletteColors by remember(wallpaper.url) { mutableStateOf<List<Int>>(emptyList()) }
     val isFavorite = wallpaper.url in favoriteUrls
@@ -117,7 +121,13 @@ fun WallpaperDetailsScreen(
         setSystemBarsVisible(true)
         onDispose { setSystemBarsVisible(true) }
     }
-    BackHandler { if (showInfo) showInfo = false else onBack() }
+    BackHandler {
+        when {
+            showApplySheet -> showApplySheet = false
+            showInfo -> showInfo = false
+            else -> onBack()
+        }
+    }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -186,13 +196,7 @@ fun WallpaperDetailsScreen(
                             finally { busy = false }
                         }
                     },
-                    onApply = {
-                        busy = true
-                        scope.launch {
-                            try { snackbar.showSnackbar(setAsWallpaper(context, wallpaper.url) ?: context.getString(R.string.viewer_applied)) }
-                            finally { busy = false }
-                        }
-                    },
+                    onApply = { showApplySheet = true },
                     onFavorite = { favorites.setFavorite(wallpaper.url, !isFavorite) },
                 )
             }
@@ -218,6 +222,163 @@ fun WallpaperDetailsScreen(
             clipboard.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.viewer_color_clipboard_label), hex))
             scope.launch { snackbar.showSnackbar(context.getString(R.string.viewer_color_copied, hex)) }
         }, { showInfo = false })
+    }
+
+    if (showApplySheet) ModalBottomSheet(
+        onDismissRequest = { if (!busy) showApplySheet = false },
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        containerColor = Color.Black.copy(alpha = 0.76f),
+        contentColor = Color.White,
+        scrimColor = Color.Black.copy(alpha = 0.58f),
+        dragHandle = {
+            Surface(
+                modifier = Modifier.size(width = 40.dp, height = 4.dp),
+                shape = RoundedCornerShape(50),
+                color = Color.White.copy(alpha = 0.65f),
+            ) {}
+        },
+    ) {
+        ApplyWallpaperSheet(
+            busy = busy,
+            onHome = {
+                applyWallpaper(context, wallpaper.url, WallpaperManager.FLAG_SYSTEM, scope, snackbar) { isBusy ->
+                    busy = isBusy
+                    if (!isBusy) showApplySheet = false
+                }
+            },
+            onLock = {
+                applyWallpaper(context, wallpaper.url, WallpaperManager.FLAG_LOCK, scope, snackbar) { isBusy ->
+                    busy = isBusy
+                    if (!isBusy) showApplySheet = false
+                }
+            },
+            onBoth = {
+                applyWallpaper(context, wallpaper.url, WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK, scope, snackbar) { isBusy ->
+                    busy = isBusy
+                    if (!isBusy) showApplySheet = false
+                }
+            },
+            onCancel = { if (!busy) showApplySheet = false },
+        )
+    }
+}
+
+private fun applyWallpaper(
+    context: Context,
+    source: Any,
+    which: Int,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbar: SnackbarHostState,
+    setBusy: (Boolean) -> Unit,
+) {
+    setBusy(true)
+    scope.launch {
+        try {
+            snackbar.showSnackbar(setAsWallpaper(context, source, which) ?: context.getString(R.string.viewer_applied))
+        } finally {
+            setBusy(false)
+        }
+    }
+}
+
+@Composable
+private fun ApplyWallpaperSheet(
+    busy: Boolean,
+    onHome: () -> Unit,
+    onLock: () -> Unit,
+    onBoth: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(R.string.viewer_set_wallpaper),
+            style = MaterialTheme.typography.headlineSmall,
+        )
+        Spacer(Modifier.height(24.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            WallpaperTarget(
+                label = stringResource(R.string.viewer_home_screen),
+                icon = Icons.Default.Home,
+                enabled = !busy,
+                onClick = onHome,
+            )
+            WallpaperTarget(
+                label = stringResource(R.string.viewer_lock_screen),
+                icon = Icons.Default.Lock,
+                enabled = !busy,
+                onClick = onLock,
+            )
+            WallpaperTarget(
+                label = stringResource(R.string.viewer_both),
+                icon = Icons.Default.Wallpaper,
+                enabled = !busy,
+                onClick = onBoth,
+            )
+        }
+        if (busy) {
+            Spacer(Modifier.height(20.dp))
+            CircularProgressIndicator(modifier = Modifier.size(28.dp))
+        }
+        Spacer(Modifier.height(24.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .padding(horizontal = 8.dp),
+        ) {
+            Surface(modifier = Modifier.fillMaxSize(), color = Color.White.copy(alpha = 0.18f)) {}
+        }
+        Spacer(Modifier.height(16.dp))
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(28.dp),
+            color = Color.White.copy(alpha = 0.12f),
+            onClick = onCancel,
+            enabled = !busy,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.viewer_cancel), style = MaterialTheme.typography.titleMedium)
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun WallpaperTarget(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(96.dp),
+    ) {
+        Surface(
+            modifier = Modifier.size(72.dp),
+            shape = CircleShape,
+            color = Color.White.copy(alpha = 0.12f),
+            onClick = onClick,
+            enabled = enabled,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = label, modifier = Modifier.size(32.dp))
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
     }
 }
 

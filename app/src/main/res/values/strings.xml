@@ -86,6 +86,11 @@
     <string name="viewer_applied">Wallpaper applied</string>
     <string name="viewer_saved">Saved to Pictures/Superiorwalls</string>
     <string name="viewer_unknown_author">Superiorwalls</string>
+    <string name="viewer_set_wallpaper">Set wallpaper</string>
+    <string name="viewer_home_screen">Home screen</string>
+    <string name="viewer_lock_screen">Lock screen</string>
+    <string name="viewer_both">Both</string>
+    <string name="viewer_cancel">Cancel</string>
     <string name="wallpaper_error_load">Could not load wallpaper</string>
     <string name="wallpaper_error_apply">Could not apply wallpaper</string>
     <string name="wallpaper_error_wifi_required">Wi-Fi is required for downloads</string>
