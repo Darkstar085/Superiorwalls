@@ -30,5 +30,5 @@
     <dimen name="bottom_nav_height">80dp</dimen>
     <dimen name="collection_card_height">120dp</dimen>
     <dimen name="collection_card_corner_radius">18dp</dimen>
-    <dimen name="settings_section_spacing">20dp</dimen>
+    <dimen name="settings_section_spacing">16dp</dimen>
 </resources>

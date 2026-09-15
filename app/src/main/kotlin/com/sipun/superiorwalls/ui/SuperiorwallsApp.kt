@@ -139,12 +139,7 @@ fun SuperiorwallsApp() {
                         NavigationRail {
                             destinations.forEach { destination ->
                                 val label = stringResource(destination.labelRes)
-                                NavigationRailItem(
-                                    selected = current?.hierarchy?.any { it.route == destination.route } == true,
-                                    onClick = { navigateTopLevel(navController, destination.route) },
-                                    icon = { Icon(destination.icon, contentDescription = label) },
-                                    label = { Text(label) },
-                                )
+                                NavigationRailItem(selected = current?.hierarchy?.any { it.route == destination.route } == true, onClick = { navigateTopLevel(navController, destination.route) }, icon = { Icon(destination.icon, contentDescription = label) }, label = { Text(label) })
                             }
                         }
                     }
@@ -163,28 +158,18 @@ fun SuperiorwallsApp() {
                         composable(AppDestination.Settings.route) { SettingsScreen(settings) }
                         composable(AppDestination.CollectionDetails.route, listOf(navArgument("name") { type = NavType.StringType })) { entry ->
                             val collection = entry.arguments?.getString("name")?.let { name -> collections.firstOrNull { it.name == name } }
-                            if (collection == null) navController.popBackStack()
-                            else CollectionWallpapersScreen(collection) { wallpaper -> navController.navigate(detailsRoute(wallpaper.url, collection = collection.name)) }
+                            if (collection == null) navController.popBackStack() else CollectionWallpapersScreen(collection) { wallpaper -> navController.navigate(detailsRoute(wallpaper.url, collection = collection.name)) }
                         }
-                        composable(
-                            AppDestination.Details.route,
-                            listOf(navArgument("url") { type = NavType.StringType }, navArgument("mode") { type = NavType.StringType; defaultValue = "all" }, navArgument("collection") { type = NavType.StringType; nullable = true; defaultValue = null }),
-                        ) { entry ->
+                        composable(AppDestination.Details.route, listOf(navArgument("url") { type = NavType.StringType }, navArgument("mode") { type = NavType.StringType; defaultValue = "all" }, navArgument("collection") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
                             val wallpaper = entry.arguments?.getString("url")?.let { url -> wallpapers.firstOrNull { it.url == url } }
                             val mode = entry.arguments?.getString("mode") ?: "all"
                             val collection = entry.arguments?.getString("collection")
-                            if (wallpaper == null) navController.popBackStack()
-                            else WallpaperDetailsScreen(wallpaper, wallpapers, favoriteUrls, mode, collection, onWallpaperChange = { next -> navController.navigate(detailsRoute(next.url, mode, collection)) { popUpTo(AppDestination.Details.route) { inclusive = true } } }, onBack = { navController.popBackStack() })
+                            if (wallpaper == null) navController.popBackStack() else WallpaperDetailsScreen(wallpaper, wallpapers, favoriteUrls, mode, collection, onWallpaperChange = { next -> navController.navigate(detailsRoute(next.url, mode, collection)) { popUpTo(AppDestination.Details.route) { inclusive = true } } }, onBack = { navController.popBackStack() })
                         }
                     }
                 }
                 if (showNavigation && !useRail) {
-                    Surface(
-                        modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp).navigationBarsPadding(),
-                        shape = RoundedCornerShape(34.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.96f),
-                        tonalElevation = 6.dp,
-                    ) {
+                    Surface(modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp).navigationBarsPadding(), shape = RoundedCornerShape(34.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.96f), tonalElevation = 6.dp) {
                         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 5.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                             destinations.forEach { destination ->
                                 val label = stringResource(destination.labelRes)
