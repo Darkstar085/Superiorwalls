@@ -97,6 +97,8 @@ fun WallpaperDetailsScreen(
     fun setSystemBarsVisible(visible: Boolean) {
         showBars = visible
         activity?.window?.let { window ->
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+            window.navigationBarColor = android.graphics.Color.TRANSPARENT
             WindowCompat.setDecorFitsSystemWindows(window, false)
             WindowInsetsControllerCompat(window, window.decorView).apply {
                 isAppearanceLightStatusBars = false
@@ -261,7 +263,7 @@ private fun ViewerAction(modifier: Modifier, label: String, icon: androidx.compo
             if (enabled) Icon(icon, contentDescription = label)
             else CircularProgressIndicator(modifier = Modifier.size(dimensionResource(R.dimen.viewer_action_icon_size)))
         }
-        Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1, modifier = Modifier.offset(y = (-6).dp))
     }
 }
 
