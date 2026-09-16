@@ -1,15 +1,12 @@
-
-
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/9a488ea0-4553-42bd-8698-d05da80ae01e" width="180" alt="Superiorwalls logo">
+  <img src=".github/assets/logo.png" width="180" alt="Superiorwalls logo">
 </p>
 
-<p align="center">
-  <strong>Beautiful wallpapers. Simple experience.</strong>
-</p>
+<h1 align="center">Superiorwalls</h1>
 
 <p align="center">
-  A modern Android wallpaper application built with Kotlin and Jetpack Compose.
+  <strong>Beautiful wallpapers. Simple experience.</strong><br>
+  A modern Android wallpaper app built with Kotlin and Jetpack Compose.
 </p>
 
 <p align="center">
@@ -23,25 +20,26 @@
 
 ## ✨ Features
 
-- 🖼️ Browse and discover wallpapers
-- 📚 Browse wallpapers by collections and themes
+- 🖼️ Browse wallpapers with lightweight previews
+- 📚 Explore wallpapers by collections and themes
 - ❤️ Save wallpapers to Favorites
-- 👀 View wallpaper details and metadata
-- 📲 Set wallpapers directly from the app
-- 💾 Save wallpapers to the device gallery
+- 👀 Open wallpapers in a full-screen viewer
+- 📲 Apply wallpapers to Home screen, Lock screen, or both
+- 💾 Save wallpapers to the device
 - 🔗 Share wallpaper URLs
 - 📥 Import images through Android image intents
 - 🎨 Material You and dynamic theming
-- 🌙 System, light, dark, and AMOLED-friendly themes
-- ✨ Configurable animations
-- 📦 Local caching for offline browsing
+- 🌙 System, light, dark, and AMOLED themes
+- ✨ Configurable interface animations
+- 📦 Room-backed local caching for offline browsing
 - 🔄 Pull-to-refresh
 - 📱 Adaptive navigation for phones and tablets
+- 🔤 Custom Plus Jakarta Sans and Syne typography
 
 ## 📸 Screenshots
 
 <p align="center">
-  <img width="4084" height="1540" alt="Superiorwalls_wide_banner_4K" src="https://github.com/user-attachments/assets/c84e8913-6b4d-4542-8bae-3c1ff9d90f0c" />
+  <img width="100%" alt="Superiorwalls app screenshots" src=".github/assets/Screenshots.png">
 </p>
 
 ## 🧰 Tech Stack
@@ -50,9 +48,9 @@
 - **Jetpack Compose**
 - **Material 3**
 - **AndroidX**
-- **Room** for local data
+- **Room** for local caching
 - **Coil** for image loading
-- **Retrofit** for network access
+- **Retrofit + Gson** for wallpaper data
 - **KSP** for code generation
 - **Gradle**
 
@@ -90,7 +88,7 @@ The generated APK is placed under `app/build/outputs/apk/`.
 
 ## 📦 Releases
 
-Download the latest APK from the repository's [Releases](https://github.com/Darkstar085/Superiorwalls-next/releases) page.
+Download the latest APK from the repository's Releases page.
 
 ## 🤝 Contributing
 
