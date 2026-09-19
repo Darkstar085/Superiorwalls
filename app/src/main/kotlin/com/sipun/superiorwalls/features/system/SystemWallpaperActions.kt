@@ -6,7 +6,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.os.Environment
 import android.provider.MediaStore
-import coil3.ImageLoader
+import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.allowHardware
@@ -24,7 +24,7 @@ suspend fun loadBitmap(context: Context, source: Any): Bitmap? = withContext(Dis
         .data(source)
         .allowHardware(false)
         .build()
-    val result = ImageLoader(context).execute(request)
+    val result = context.imageLoader.execute(request)
     (result as? SuccessResult)?.image?.toBitmap()
 }
 

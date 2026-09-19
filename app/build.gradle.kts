@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.sipun.superiorwalls"
-        minSdk = 26
+        minSdk = 29
         targetSdk = 37
         versionCode = 6
         versionName = "1.0"
@@ -27,7 +27,10 @@ android {
             }
             if (!keystorePassword.isNullOrBlank()) {
                 storePassword = keystorePassword
-                keyPassword = keystorePassword
+                val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+                if (!keyPassword.isNullOrBlank()) {
+                    this.keyPassword = keyPassword
+                }
             }
             if (!keyAlias.isNullOrBlank()) {
                 this.keyAlias = keyAlias

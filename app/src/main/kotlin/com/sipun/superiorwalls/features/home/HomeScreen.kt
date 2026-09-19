@@ -63,8 +63,6 @@ import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.data.repository.FavoriteWallpaperStore
 import com.sipun.superiorwalls.domain.model.Wallpaper
 import com.sipun.superiorwalls.ui.theme.LocalAnimationsEnabled
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 @Composable
 fun HomeScreen(onWallpaperClick: (Wallpaper) -> Unit, viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)) {
@@ -128,7 +126,9 @@ fun WallpaperGrid(wallpapers: List<Wallpaper>, onWallpaperClick: (Wallpaper) -> 
     }
 }
 
-private fun wallpaperPreviewUrl(wallpaper: Wallpaper): String? { val sourceUrl = (wallpaper.thumbnail?.trim()?.takeIf { it.isNotEmpty() } ?: wallpaper.url.trim().takeIf { it.isNotEmpty() }) ?: return null; val encodedUrl = URLEncoder.encode(sourceUrl, StandardCharsets.UTF_8.name()); return "https://wsrv.nl/?url=$encodedUrl&w=480&output=webp&q=72" }
+private fun wallpaperPreviewUrl(wallpaper: Wallpaper): String? =
+    wallpaper.thumbnail?.trim()?.takeIf { it.isNotEmpty() }
+        ?: wallpaper.url.trim().takeIf { it.isNotEmpty() }
 
 @Composable private fun LoadingContent() { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
 

@@ -42,6 +42,13 @@ jobs:
           echo "version=$current" >> "$GITHUB_OUTPUT"
           echo "tag=v$current" >> "$GITHUB_OUTPUT"
 
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v6
+
       - name: Build signed APK
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -72,13 +79,6 @@ jobs:
           name="Superiorwalls_v${VERSION}.apk"
           cp "$apk" "$name"
           echo "path=$name" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - uses: gradle/actions/setup-gradle@v6
 
       - name: Generate release changelog
         env:

@@ -60,6 +60,7 @@ import coil3.compose.AsyncImage
 import coil3.toBitmap
 import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.data.repository.FavoriteWallpaperStore
+import com.sipun.superiorwalls.data.repository.WallpaperCollectionMapper
 import com.sipun.superiorwalls.domain.model.Wallpaper
 import com.sipun.superiorwalls.features.system.saveToGallery
 import com.sipun.superiorwalls.features.system.setAsWallpaper
@@ -93,7 +94,7 @@ fun WallpaperDetailsScreen(
     val viewerWallpapers = remember(wallpapers, favoriteUrls, mode, collectionName) {
         when {
             mode == "favorites" -> wallpapers.filter { it.url in favoriteUrls }
-            !collectionName.isNullOrBlank() -> wallpapers.filter { collectionName in it.collections.orEmpty() }
+            !collectionName.isNullOrBlank() -> wallpapers.filter { WallpaperCollectionMapper.containsCollection(it.collections, collectionName.orEmpty()) }
             else -> wallpapers
         }
     }
@@ -188,6 +189,7 @@ fun WallpaperDetailsScreen(
                     modifier = Modifier.align(Alignment.BottomCenter),
                     isFavorite = isFavorite,
                     busy = busy,
+                    downloadable = wallpaper.downloadable != false,
                     onInfo = { showInfo = true },
                     onSave = {
                         busy = true
@@ -387,6 +389,7 @@ private fun ViewerActionBar(
     modifier: Modifier = Modifier,
     isFavorite: Boolean,
     busy: Boolean,
+    downloadable: Boolean,
     onInfo: () -> Unit,
     onSave: () -> Unit,
     onApply: () -> Unit,
@@ -415,8 +418,8 @@ private fun ViewerActionBar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_info), Icons.Default.Info, onInfo)
-            ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_save), Icons.Default.Download, onSave, !busy)
-            ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_apply), Icons.Default.Wallpaper, onApply, !busy)
+            ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_save), Icons.Default.Download, onSave, !busy && downloadable)
+            ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_apply), Icons.Default.Wallpaper, onApply, !busy && downloadable)
             ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_favorite), if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, onFavorite, !busy)
         }
     }

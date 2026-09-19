@@ -21,6 +21,12 @@ class WallpaperCollectionMapperTest {
     }
 
     @Test
+    fun `matches collection names case insensitively`() {
+        assertTrue(WallpaperCollectionMapper.containsCollection("nature|dark", "Nature"))
+        assertTrue(WallpaperCollectionMapper.containsCollection("Nature, travel", "nature"))
+    }
+
+    @Test
     fun `ignores blank collection names and duplicate wallpaper urls`() {
         val duplicate = wallpaper("same", "nature, ,nature")
 

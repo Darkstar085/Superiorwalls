@@ -67,6 +67,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -89,7 +90,7 @@ fun SettingsScreen(store: AppSettingsStore) {
     val interfaceSettings by store.observeInterfaceSettings().collectAsStateWithLifecycle(initialValue = store.interfaceSettings())
     val storageSettings by store.observeStorageSettings().collectAsStateWithLifecycle(initialValue = store.storageSettings())
     val notificationSettings by store.observeNotificationSettings().collectAsStateWithLifecycle(initialValue = store.notificationSettings())
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> if (!granted) store.setNotificationsEnabled(false) }
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> store.setNotificationsEnabled(granted) }
     val listState = rememberLazyListState()
     var showThemeDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
@@ -123,8 +124,8 @@ fun SettingsScreen(store: AppSettingsStore) {
                     .padding(top = dimensionResource(R.dimen.screen_header_padding)),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.compact_spacing)),
             ) {
-                Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineSmall)
-                Text(stringResource(R.string.settings_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineSmall.copy(fontSize = 22.sp))
+                Text(stringResource(R.string.settings_subtitle), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             }
         }
         item {
@@ -140,9 +141,9 @@ fun SettingsScreen(store: AppSettingsStore) {
             SettingsSection(stringResource(R.string.settings_storage), stringResource(R.string.settings_storage_summary)) {
                 SettingsSwitchRow(stringResource(R.string.settings_download_wifi_only), stringResource(R.string.settings_download_wifi_only_summary), storageSettings.downloadOnWifiOnly, store::setDownloadOnWifiOnly, Icons.Default.Wifi)
                 SettingsSwitchRow(stringResource(R.string.settings_scale_to_fit), stringResource(R.string.settings_scale_to_fit_summary), storageSettings.scaleToFit, store::setScaleToFit, Icons.Default.FitScreen)
-                ListItem(headlineContent = { Text(stringResource(R.string.settings_wallpapers_saved_to)) }, supportingContent = { Text(stringResource(R.string.settings_wallpapers_saved_to_summary)) }, leadingContent = { SettingsIcon(Icons.Default.Folder) })
+                ListItem(headlineContent = { Text(stringResource(R.string.settings_wallpapers_saved_to), style = MaterialTheme.typography.titleSmall) }, supportingContent = { Text(stringResource(R.string.settings_wallpapers_saved_to_summary), style = MaterialTheme.typography.bodySmall) }, leadingContent = { SettingsIcon(Icons.Default.Folder) })
                 Spacer(Modifier.height(8.dp))
-                ListItem(modifier = Modifier.clickable { scope.launch(Dispatchers.IO) { AppContainer.clearLocalData(context); withContext(Dispatchers.Main) { cacheSize = calculateCacheSize(context) } } }, headlineContent = { Text(stringResource(R.string.settings_clear_app_data)) }, supportingContent = { Text(stringResource(R.string.settings_clear_app_data_summary, cacheSize)) }, leadingContent = { SettingsIcon(Icons.Default.DeleteSweep, destructive = true) })
+                ListItem(modifier = Modifier.clickable { scope.launch(Dispatchers.IO) { AppContainer.clearLocalData(context); withContext(Dispatchers.Main) { cacheSize = calculateCacheSize(context) } } }, headlineContent = { Text(stringResource(R.string.settings_clear_app_data), style = MaterialTheme.typography.titleSmall) }, supportingContent = { Text(stringResource(R.string.settings_clear_app_data_summary, cacheSize), style = MaterialTheme.typography.bodySmall) }, leadingContent = { SettingsIcon(Icons.Default.DeleteSweep, destructive = true) })
             }
         }
         item {
@@ -155,7 +156,7 @@ fun SettingsScreen(store: AppSettingsStore) {
         }
         item {
             SettingsSection(stringResource(R.string.settings_about)) {
-                ListItem(modifier = Modifier.clickable { showAboutDialog = true }, headlineContent = { Text(stringResource(R.string.app_name)) }, supportingContent = { Text(stringResource(R.string.settings_about_summary)) }, leadingContent = { SettingsIcon(Icons.Default.Info) })
+                ListItem(modifier = Modifier.clickable { showAboutDialog = true }, headlineContent = { Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleSmall) }, supportingContent = { Text(stringResource(R.string.settings_about_summary), style = MaterialTheme.typography.bodySmall) }, leadingContent = { SettingsIcon(Icons.Default.Info) })
             }
         }
     }
@@ -191,8 +192,8 @@ private fun SettingsSection(title: String, summary: String? = null, content: @Co
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(title, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
-                summary?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium) }
+                Text(title, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
+                summary?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
             }
             content()
         }
@@ -208,7 +209,7 @@ private fun SettingsIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, 
 
 @Composable
 private fun SettingsSwitchRow(title: String, summary: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, icon: androidx.compose.ui.graphics.vector.ImageVector, enabled: Boolean = true) {
-    ListItem(leadingContent = { SettingsIcon(icon) }, headlineContent = { Text(title) }, supportingContent = { Text(summary) }, trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled) })
+    ListItem(leadingContent = { SettingsIcon(icon) }, headlineContent = { Text(title, style = MaterialTheme.typography.titleSmall) }, supportingContent = { Text(summary, style = MaterialTheme.typography.bodySmall) }, trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled) })
 }
 
 @Composable
@@ -222,7 +223,7 @@ private fun ThemeSelectionDialog(selected: ThemeMode, onSelected: (ThemeMode) ->
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(Modifier.fillMaxWidth().widthIn(max = 420.dp).padding(horizontal = 24.dp), RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, tonalElevation = 6.dp) {
             Column(Modifier.padding(vertical = 12.dp)) {
-                Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp))
+                Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp))
                 options.forEach { (mode, label) -> ListItem(modifier = Modifier.clickable { onSelected(mode) }, headlineContent = { Text(label) }, leadingContent = { RadioButton(selected = mode == selected, onClick = { onSelected(mode) }) }) }
                 TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End).padding(horizontal = 16.dp)) { Text(stringResource(R.string.settings_done)) }
             }

@@ -4,21 +4,26 @@ import com.sipun.superiorwalls.domain.model.Collection
 import com.sipun.superiorwalls.domain.model.Wallpaper
 
 object WallpaperCollectionMapper {
+    fun collectionNames(raw: String?): List<String> =
+        raw.orEmpty()
+            .replace("|", ",")
+            .split(",")
+            .map(String::trim)
+            .filter(String::isNotBlank)
+            .distinctBy { it.lowercase() }
+
+    fun containsCollection(raw: String?, collectionName: String): Boolean =
+        collectionNames(raw).any { it.equals(collectionName.trim(), ignoreCase = true) }
+
     fun build(wallpapers: List<Wallpaper>): List<Collection> {
         val grouped = linkedMapOf<String, Pair<String, MutableList<Wallpaper>>>()
         wallpapers.forEach { wallpaper ->
-            wallpaper.collections.orEmpty()
-                .replace("|", ",")
-                .split(",")
-                .map(String::trim)
-                .filter(String::isNotBlank)
-                .distinct()
-                .forEach { name ->
-                    val key = name.lowercase()
-                    val current = grouped[key]?.second ?: mutableListOf()
-                    current += wallpaper
-                    grouped[key] = name to current
-                }
+            collectionNames(wallpaper.collections).forEach { name ->
+                val key = name.lowercase()
+                val current = grouped[key]?.second ?: mutableListOf()
+                current += wallpaper
+                grouped[key] = name to current
+            }
         }
         return grouped.values.map { (name, items) ->
             Collection(

@@ -1,12 +1,15 @@
 package com.sipun.superiorwalls.data.repository
 
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
 class AppSettingsStore(context: Context) {
-    private val preferences = context.applicationContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
+    private val preferences = appContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
     fun observeThemeMode(): Flow<ThemeMode> = callbackFlow {
         trySend(themeMode())
@@ -88,9 +91,12 @@ class AppSettingsStore(context: Context) {
         awaitClose { preferences.unregisterOnSharedPreferenceChangeListener(listener) }
     }
 
-    fun notificationSettings(): NotificationSettings = NotificationSettings(
-        enabled = preferences.getBoolean(KEY_NOTIFICATIONS_ENABLED, true),
-    )
+    fun notificationSettings(): NotificationSettings {
+        val enabled = preferences.getBoolean(KEY_NOTIFICATIONS_ENABLED, true)
+        val permissionGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            appContext.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        return NotificationSettings(enabled = enabled && permissionGranted)
+    }
 
     fun setNotificationsEnabled(enabled: Boolean) {
         preferences.edit().putBoolean(KEY_NOTIFICATIONS_ENABLED, enabled).apply()
@@ -100,6 +106,10 @@ class AppSettingsStore(context: Context) {
 
     fun setRemoteWallpapersLoaded() {
         preferences.edit().putBoolean(KEY_REMOTE_WALLPAPERS_LOADED, true).apply()
+    }
+
+    fun clearRemoteWallpapersLoaded() {
+        preferences.edit().putBoolean(KEY_REMOTE_WALLPAPERS_LOADED, false).apply()
     }
 
     companion object {

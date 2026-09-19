@@ -1,6 +1,5 @@
 package com.sipun.superiorwalls.data.repository
 
-import android.content.Context
 import com.sipun.superiorwalls.data.local.SuperiorwallsDatabase
 import com.sipun.superiorwalls.data.local.WallpaperEntity
 import com.sipun.superiorwalls.data.local.toDomain
@@ -17,7 +16,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class RoomWallpaperRepository(
-    private val context: Context,
     private val database: SuperiorwallsDatabase,
 ) : WallpaperRepository {
     private val dao = database.wallpaperDao()
@@ -50,9 +48,7 @@ class RoomWallpaperRepository(
             val remote = service.getJson(DATA_URL)
                 .filter { it.url.isNotBlank() }
                 .distinctBy { it.url }
-            if (remote.isNotEmpty()) {
-                dao.replaceAll(remote.map(Wallpaper::toEntity))
-            }
+            dao.replaceAll(remote.map(Wallpaper::toEntity))
         }
     }
 
