@@ -7,7 +7,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Build
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -116,14 +115,6 @@ fun WallpaperDetailsScreen(
         setSystemBarsVisible(true)
         onDispose { setSystemBarsVisible(true) }
     }
-    BackHandler {
-        when {
-            showApplySheet -> showApplySheet = false
-            showInfo -> showInfo = false
-            else -> onBack()
-        }
-    }
-
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),

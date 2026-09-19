@@ -9,6 +9,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
@@ -140,9 +141,9 @@ fun SuperiorwallsApp() {
     ) {
         val animationsEnabled = LocalAnimationsEnabled.current
         val enter: EnterTransition = if (animationsEnabled) fadeIn(tween(430)) + slideInHorizontally(tween(430), initialOffsetX = { it }) else EnterTransition.None
-        val exit: ExitTransition = if (animationsEnabled) fadeOut(tween(350)) else ExitTransition.None
+        val exit: ExitTransition = if (animationsEnabled) fadeOut(tween(350)) + slideOutHorizontally(tween(350), targetOffsetX = { -it }) else ExitTransition.None
         val popEnter: EnterTransition = if (animationsEnabled) fadeIn(tween(430)) + slideInHorizontally(tween(430), initialOffsetX = { -it }) else EnterTransition.None
-        val popExit: ExitTransition = if (animationsEnabled) fadeOut(tween(350)) else ExitTransition.None
+        val popExit: ExitTransition = if (animationsEnabled) fadeOut(tween(350)) + slideOutHorizontally(tween(350), targetOffsetX = { it }) else ExitTransition.None
 
         Scaffold(
             contentWindowInsets = if (isDetails) WindowInsets(0, 0, 0, 0) else WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
@@ -166,6 +167,8 @@ fun SuperiorwallsApp() {
                         exitTransition = { exit },
                         popEnterTransition = { popEnter },
                         popExitTransition = { popExit },
+                        predictivePopEnterTransition = { _ -> popEnter },
+                        predictivePopExitTransition = { _ -> popExit },
                     ) {
                         composable(AppDestination.Home.route) { HomeScreen(onWallpaperClick = { wallpaper -> navController.navigate(detailsRoute(wallpaper.url)) }) }
                         composable(AppDestination.Collections.route) { CollectionsScreen(collections) { collection -> navController.navigate("${AppDestination.CollectionDetails.routeBase}/${Uri.encode(collection.name)}") } }
