@@ -14,7 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
@@ -104,12 +104,6 @@ fun WallpaperDetailsScreen(
         showBars = visible
         activity?.window?.let { window ->
             WindowCompat.setDecorFitsSystemWindows(window, false)
-            window.statusBarColor = android.graphics.Color.TRANSPARENT
-            window.navigationBarColor = android.graphics.Color.TRANSPARENT
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                window.isStatusBarContrastEnforced = false
-                window.isNavigationBarContrastEnforced = false
-            }
             WindowInsetsControllerCompat(window, window.decorView).apply {
                 isAppearanceLightStatusBars = false
                 isAppearanceLightNavigationBars = false
@@ -177,7 +171,7 @@ fun WallpaperDetailsScreen(
                 ) {
                     IconButton(onClick = onBack) {
                         Icon(
-                            Icons.Default.ArrowBack,
+                            Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.viewer_back),
                             tint = colorResource(R.color.viewer_overlay_content),
                         )
