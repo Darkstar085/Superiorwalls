@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -89,11 +88,6 @@ fun SuperiorwallsTheme(
         colorScheme = colorScheme,
         typography = SuperiorwallsTypography,
     ) {
-        val activity = context as? Activity
-        val navigationBarColor = if (colorNavigationBar) colorScheme.surface.toArgb() else Color.Transparent.toArgb()
-        SideEffect {
-            activity?.window?.navigationBarColor = navigationBarColor
-        }
         CompositionLocalProvider(LocalAnimationsEnabled provides animationsEnabled) {
             content()
         }
