@@ -3,6 +3,7 @@ package com.sipun.superiorwalls.features.settings
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.RepeatMode
@@ -29,6 +30,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Animation
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.FitScreen
@@ -155,8 +157,26 @@ fun SettingsScreen(store: AppSettingsStore) {
             }
         }
         item {
-            SettingsSection(stringResource(R.string.settings_about)) {
-                ListItem(modifier = Modifier.clickable { showAboutDialog = true }, headlineContent = { Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleSmall) }, supportingContent = { Text(stringResource(R.string.settings_about_summary), style = MaterialTheme.typography.bodySmall) }, leadingContent = { SettingsIcon(Icons.Default.Info) })
+            SettingsSection(stringResource(R.string.settings_about), stringResource(R.string.settings_about_summary)) {
+                ListItem(
+                    modifier = Modifier.clickable { showAboutDialog = true },
+                    headlineContent = { Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleSmall) },
+                    supportingContent = { Text(stringResource(R.string.about_description), style = MaterialTheme.typography.bodySmall) },
+                    leadingContent = { SettingsIcon(Icons.Default.Info) },
+                )
+                ListItem(
+                    modifier = Modifier.clickable {
+                        context.startActivity(
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                android.net.Uri.parse("https://github.com/Darkstar085/Superiorwalls"),
+                            ),
+                        )
+                    },
+                    headlineContent = { Text(stringResource(R.string.settings_open_source), style = MaterialTheme.typography.titleSmall) },
+                    supportingContent = { Text(stringResource(R.string.settings_open_source_summary), style = MaterialTheme.typography.bodySmall) },
+                    leadingContent = { SettingsIcon(Icons.Default.Code) },
+                )
             }
         }
     }
@@ -192,7 +212,7 @@ private fun SettingsSection(title: String, summary: String? = null, content: @Co
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(title, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
+                Text(title, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
                 summary?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
             }
             content()
