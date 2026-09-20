@@ -55,7 +55,10 @@
     <string name="notification_wallpaper_saved">Wallpaper saved to your gallery.</string>
     <string name="notification_delete">Delete</string>
     <string name="settings_about">About</string>
-    <string name="settings_about_summary">Version and developer info.</string>
+    <string name="settings_about_summary">App information and support.</string>
+    <string name="about_description">Beautiful wallpapers for every screen.</string>
+    <string name="settings_open_source">Open source</string>
+    <string name="settings_open_source_summary">View the source code on GitHub.</string>
     <string name="about_made_with_prefix">Made with</string>
     <string name="about_made_with_suffix">by Sipun</string>
     <string name="about_version">Version %1$s</string>

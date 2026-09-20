@@ -3,6 +3,7 @@ package com.sipun.superiorwalls.features.settings
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.RepeatMode
@@ -29,6 +30,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Animation
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.FitScreen
@@ -141,9 +143,9 @@ fun SettingsScreen(store: AppSettingsStore) {
             SettingsSection(stringResource(R.string.settings_storage), stringResource(R.string.settings_storage_summary)) {
                 SettingsSwitchRow(stringResource(R.string.settings_download_wifi_only), stringResource(R.string.settings_download_wifi_only_summary), storageSettings.downloadOnWifiOnly, store::setDownloadOnWifiOnly, Icons.Default.Wifi)
                 SettingsSwitchRow(stringResource(R.string.settings_scale_to_fit), stringResource(R.string.settings_scale_to_fit_summary), storageSettings.scaleToFit, store::setScaleToFit, Icons.Default.FitScreen)
-                ListItem(headlineContent = { Text(stringResource(R.string.settings_wallpapers_saved_to), style = MaterialTheme.typography.titleSmall) }, supportingContent = { Text(stringResource(R.string.settings_wallpapers_saved_to_summary), style = MaterialTheme.typography.bodySmall) }, leadingContent = { SettingsIcon(Icons.Default.Folder) })
+                ListItem( headlineContent = { Text(stringResource(R.string.settings_wallpapers_saved_to), style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f)) }, supportingContent = { Text(stringResource(R.string.settings_wallpapers_saved_to_summary), style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f)) }, leadingContent = { SettingsIcon(Icons.Default.Folder) })
                 Spacer(Modifier.height(8.dp))
-                ListItem(modifier = Modifier.clickable { scope.launch(Dispatchers.IO) { AppContainer.clearLocalData(context); withContext(Dispatchers.Main) { cacheSize = calculateCacheSize(context) } } }, headlineContent = { Text(stringResource(R.string.settings_clear_app_data), style = MaterialTheme.typography.titleSmall) }, supportingContent = { Text(stringResource(R.string.settings_clear_app_data_summary, cacheSize), style = MaterialTheme.typography.bodySmall) }, leadingContent = { SettingsIcon(Icons.Default.DeleteSweep, destructive = true) })
+                ListItem( modifier = Modifier.clickable { scope.launch(Dispatchers.IO) { AppContainer.clearLocalData(context); withContext(Dispatchers.Main) { cacheSize = calculateCacheSize(context) } } }, headlineContent = { Text(stringResource(R.string.settings_clear_app_data), style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f)) }, supportingContent = { Text(stringResource(R.string.settings_clear_app_data_summary, cacheSize), style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f)) }, leadingContent = { SettingsIcon(Icons.Default.DeleteSweep, destructive = true) })
             }
         }
         item {
@@ -155,8 +157,16 @@ fun SettingsScreen(store: AppSettingsStore) {
             }
         }
         item {
-            SettingsSection(stringResource(R.string.settings_about)) {
-                ListItem(modifier = Modifier.clickable { showAboutDialog = true }, headlineContent = { Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleSmall) }, supportingContent = { Text(stringResource(R.string.settings_about_summary), style = MaterialTheme.typography.bodySmall) }, leadingContent = { SettingsIcon(Icons.Default.Info) })
+            SettingsSection(stringResource(R.string.settings_about), stringResource(R.string.settings_about_summary)) {
+                CompactSettingsRow(icon = Icons.Default.Info, title = stringResource(R.string.app_name), summary = stringResource(R.string.about_description), onClick = { showAboutDialog = true })
+                CompactSettingsRow(icon = Icons.Default.Code, title = stringResource(R.string.settings_open_source), summary = stringResource(R.string.settings_open_source_summary), onClick = {
+                    context.startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            android.net.Uri.parse("https://github.com/Darkstar085/Superiorwalls"),
+                        ),
+                    )
+                })
             }
         }
     }
@@ -192,10 +202,39 @@ private fun SettingsSection(title: String, summary: String? = null, content: @Co
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(title, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleSmall)
+                Text(title, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
                 summary?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
             }
             content()
+        }
+    }
+}
+
+@Composable
+private fun CompactSettingsRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    summary: String,
+    destructive: Boolean = false,
+    onClick: (() -> Unit)? = null,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(68.dp)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIcon(icon, destructive)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(1.dp),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f))
+            Text(summary, style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f))
         }
     }
 }
@@ -209,12 +248,64 @@ private fun SettingsIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, 
 
 @Composable
 private fun SettingsSwitchRow(title: String, summary: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, icon: androidx.compose.ui.graphics.vector.ImageVector, enabled: Boolean = true) {
-    ListItem(leadingContent = { SettingsIcon(icon) }, headlineContent = { Text(title, style = MaterialTheme.typography.titleSmall) }, supportingContent = { Text(summary, style = MaterialTheme.typography.bodySmall) }, trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled) })
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(68.dp)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIcon(icon)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(1.dp),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f))
+            Text(summary, style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f))
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+    }
 }
 
 @Composable
 private fun ThemePreferenceRow(selected: ThemeMode, onClick: () -> Unit) {
-    ListItem(modifier = Modifier.clickable(onClick = onClick), leadingContent = { SettingsIcon(when (selected) { ThemeMode.SYSTEM -> Icons.Default.SettingsBrightness; ThemeMode.LIGHT -> Icons.Default.LightMode; ThemeMode.DARK -> Icons.Default.DarkMode }) }, headlineContent = { Text(stringResource(R.string.settings_theme)) }, supportingContent = { Text(themeModeLabel(selected)) })
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(68.dp)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIcon(
+            when (selected) {
+                ThemeMode.SYSTEM -> Icons.Default.SettingsBrightness
+                ThemeMode.LIGHT -> Icons.Default.LightMode
+                ThemeMode.DARK -> Icons.Default.DarkMode
+            }
+        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(1.dp),
+        ) {
+            Text(
+                stringResource(R.string.settings_theme),
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontSize = MaterialTheme.typography.bodyLarge.fontSize * 0.9f
+                )
+            )
+            Text(
+                themeModeLabel(selected),
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.9f
+                )
+            )
+        }
+    }
 }
 
 @Composable
