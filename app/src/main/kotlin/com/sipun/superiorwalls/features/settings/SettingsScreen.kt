@@ -158,27 +158,15 @@ fun SettingsScreen(store: AppSettingsStore) {
         }
         item {
             SettingsSection(stringResource(R.string.settings_about), stringResource(R.string.settings_about_summary)) {
-                ListItem(
-                    
-                    modifier = Modifier.height(68.dp).clickable { showAboutDialog = true },
-                    headlineContent = { Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f)) },
-                    supportingContent = { Text(stringResource(R.string.about_description), style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f)) },
-                    leadingContent = { SettingsIcon(Icons.Default.Info) },
-                )
-                ListItem(
-                    
-                    modifier = Modifier.height(68.dp).clickable {
-                        context.startActivity(
-                            Intent(
-                                Intent.ACTION_VIEW,
-                                android.net.Uri.parse("https://github.com/Darkstar085/Superiorwalls"),
-                            ),
-                        )
-                    },
-                    headlineContent = { Text(stringResource(R.string.settings_open_source), style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f)) },
-                    supportingContent = { Text(stringResource(R.string.settings_open_source_summary), style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f)) },
-                    leadingContent = { SettingsIcon(Icons.Default.Code) },
-                )
+                CompactSettingsRow(icon = Icons.Default.Info, title = stringResource(R.string.app_name), summary = stringResource(R.string.about_description), onClick = { showAboutDialog = true })
+                CompactSettingsRow(icon = Icons.Default.Code, title = stringResource(R.string.settings_open_source), summary = stringResource(R.string.settings_open_source_summary), onClick = {
+                    context.startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            android.net.Uri.parse("https://github.com/Darkstar085/Superiorwalls"),
+                        ),
+                    )
+                })
             }
         }
     }
