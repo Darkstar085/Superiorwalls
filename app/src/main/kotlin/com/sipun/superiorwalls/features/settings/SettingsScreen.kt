@@ -143,9 +143,9 @@ fun SettingsScreen(store: AppSettingsStore) {
             SettingsSection(stringResource(R.string.settings_storage), stringResource(R.string.settings_storage_summary)) {
                 SettingsSwitchRow(stringResource(R.string.settings_download_wifi_only), stringResource(R.string.settings_download_wifi_only_summary), storageSettings.downloadOnWifiOnly, store::setDownloadOnWifiOnly, Icons.Default.Wifi)
                 SettingsSwitchRow(stringResource(R.string.settings_scale_to_fit), stringResource(R.string.settings_scale_to_fit_summary), storageSettings.scaleToFit, store::setScaleToFit, Icons.Default.FitScreen)
-                ListItem(headlineContent = { Text(stringResource(R.string.settings_wallpapers_saved_to), style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f)) }, supportingContent = { Text(stringResource(R.string.settings_wallpapers_saved_to_summary), style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f)) }, leadingContent = { SettingsIcon(Icons.Default.Folder) })
+                ListItem(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp), headlineContent = { Text(stringResource(R.string.settings_wallpapers_saved_to), style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f)) }, supportingContent = { Text(stringResource(R.string.settings_wallpapers_saved_to_summary), style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f)) }, leadingContent = { SettingsIcon(Icons.Default.Folder) })
                 Spacer(Modifier.height(8.dp))
-                ListItem(modifier = Modifier.clickable { scope.launch(Dispatchers.IO) { AppContainer.clearLocalData(context); withContext(Dispatchers.Main) { cacheSize = calculateCacheSize(context) } } }, headlineContent = { Text(stringResource(R.string.settings_clear_app_data), style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f)) }, supportingContent = { Text(stringResource(R.string.settings_clear_app_data_summary, cacheSize), style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f)) }, leadingContent = { SettingsIcon(Icons.Default.DeleteSweep, destructive = true) })
+                ListItem(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp), modifier = Modifier.clickable { scope.launch(Dispatchers.IO) { AppContainer.clearLocalData(context); withContext(Dispatchers.Main) { cacheSize = calculateCacheSize(context) } } }, headlineContent = { Text(stringResource(R.string.settings_clear_app_data), style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f)) }, supportingContent = { Text(stringResource(R.string.settings_clear_app_data_summary, cacheSize), style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f)) }, leadingContent = { SettingsIcon(Icons.Default.DeleteSweep, destructive = true) })
             }
         }
         item {
@@ -159,12 +159,14 @@ fun SettingsScreen(store: AppSettingsStore) {
         item {
             SettingsSection(stringResource(R.string.settings_about), stringResource(R.string.settings_about_summary)) {
                 ListItem(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp),
                     modifier = Modifier.clickable { showAboutDialog = true },
                     headlineContent = { Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f)) },
                     supportingContent = { Text(stringResource(R.string.about_description), style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f)) },
                     leadingContent = { SettingsIcon(Icons.Default.Info) },
                 )
                 ListItem(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp),
                     modifier = Modifier.clickable {
                         context.startActivity(
                             Intent(
@@ -229,12 +231,12 @@ private fun SettingsIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, 
 
 @Composable
 private fun SettingsSwitchRow(title: String, summary: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, icon: androidx.compose.ui.graphics.vector.ImageVector, enabled: Boolean = true) {
-    ListItem(leadingContent = { SettingsIcon(icon) }, headlineContent = { Text(title, style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f)) }, supportingContent = { Text(summary, style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f)) }, trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled) })
+    ListItem(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp), leadingContent = { SettingsIcon(icon) }, headlineContent = { Text(title, style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f)) }, supportingContent = { Text(summary, style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f)) }, trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled) })
 }
 
 @Composable
 private fun ThemePreferenceRow(selected: ThemeMode, onClick: () -> Unit) {
-    ListItem(modifier = Modifier.clickable(onClick = onClick), leadingContent = { SettingsIcon(when (selected) { ThemeMode.SYSTEM -> Icons.Default.SettingsBrightness; ThemeMode.LIGHT -> Icons.Default.LightMode; ThemeMode.DARK -> Icons.Default.DarkMode }) }, headlineContent = { Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.bodyLarge.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize * 0.9f)) }, supportingContent = { Text(themeModeLabel(selected), style = MaterialTheme.typography.bodyMedium.copy(fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.9f)) })
+    ListItem(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp), modifier = Modifier.clickable(onClick = onClick), leadingContent = { SettingsIcon(when (selected) { ThemeMode.SYSTEM -> Icons.Default.SettingsBrightness; ThemeMode.LIGHT -> Icons.Default.LightMode; ThemeMode.DARK -> Icons.Default.DarkMode }) }, headlineContent = { Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.bodyLarge.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize * 0.9f)) }, supportingContent = { Text(themeModeLabel(selected), style = MaterialTheme.typography.bodyMedium.copy(fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.9f)) })
 }
 
 @Composable
