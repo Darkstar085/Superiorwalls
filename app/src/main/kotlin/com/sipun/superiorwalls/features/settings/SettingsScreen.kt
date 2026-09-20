@@ -223,6 +223,35 @@ private fun SettingsSection(title: String, summary: String? = null, content: @Co
 }
 
 @Composable
+private fun CompactSettingsRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    summary: String,
+    destructive: Boolean = false,
+    onClick: (() -> Unit)? = null,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(68.dp)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIcon(icon, destructive)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(1.dp),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f))
+            Text(summary, style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f))
+        }
+    }
+}
+
+@Composable
 private fun SettingsIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, destructive: Boolean = false) {
     val container = if (destructive) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer
     val tint = if (destructive) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer
@@ -231,12 +260,64 @@ private fun SettingsIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, 
 
 @Composable
 private fun SettingsSwitchRow(title: String, summary: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, icon: androidx.compose.ui.graphics.vector.ImageVector, enabled: Boolean = true) {
-    ListItem( leadingContent = { SettingsIcon(icon) }, headlineContent = { Text(title, style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f)) }, supportingContent = { Text(summary, style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f)) }, trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled) })
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(68.dp)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIcon(icon)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(1.dp),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * 0.9f))
+            Text(summary, style = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.9f))
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+    }
 }
 
 @Composable
 private fun ThemePreferenceRow(selected: ThemeMode, onClick: () -> Unit) {
-    ListItem( modifier = Modifier.clickable(onClick = onClick), leadingContent = { SettingsIcon(when (selected) { ThemeMode.SYSTEM -> Icons.Default.SettingsBrightness; ThemeMode.LIGHT -> Icons.Default.LightMode; ThemeMode.DARK -> Icons.Default.DarkMode }) }, headlineContent = { Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.bodyLarge.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize * 0.9f)) }, supportingContent = { Text(themeModeLabel(selected), style = MaterialTheme.typography.bodyMedium.copy(fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.9f)) })
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(68.dp)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsIcon(
+            when (selected) {
+                ThemeMode.SYSTEM -> Icons.Default.SettingsBrightness
+                ThemeMode.LIGHT -> Icons.Default.LightMode
+                ThemeMode.DARK -> Icons.Default.DarkMode
+            }
+        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(1.dp),
+        ) {
+            Text(
+                stringResource(R.string.settings_theme),
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontSize = MaterialTheme.typography.bodyLarge.fontSize * 0.9f
+                )
+            )
+            Text(
+                themeModeLabel(selected),
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * 0.9f
+                )
+            )
+        }
+    }
 }
 
 @Composable
