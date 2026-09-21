@@ -10,11 +10,11 @@ import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
@@ -83,8 +83,6 @@ fun WallpaperDetailsScreen(
     favoriteUrls: Set<String>,
     mode: String = "all",
     collectionName: String? = null,
-    direction: String = "none",
-    onWallpaperChange: (Wallpaper) -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -98,24 +96,32 @@ fun WallpaperDetailsScreen(
     var showInfo by remember { mutableStateOf(false) }
     var showApplySheet by remember { mutableStateOf(false) }
     var showBars by remember { mutableStateOf(true) }
-    var showSwipeHint by rememberSaveable(direction) { mutableStateOf(direction == "none") }
-    var imageRetryKey by remember(wallpaper.url) { mutableStateOf(0) }
-    var imageState by remember(wallpaper.url) { mutableStateOf(ImageState.Loading) }
-    var paletteColors by remember(wallpaper.url) { mutableStateOf<List<Int>>(emptyList()) }
-    val isFavorite = wallpaper.url in favoriteUrls
+    var showSwipeHint by rememberSaveable { mutableStateOf(true) }
+    var paletteColors by remember { mutableStateOf<List<Int>>(emptyList()) }
+
     val viewerWallpapers = remember(wallpapers, favoriteUrls, mode, collectionName) {
         when {
             mode == "favorites" -> wallpapers.filter { it.url in favoriteUrls }
-            !collectionName.isNullOrBlank() -> wallpapers.filter { WallpaperCollectionMapper.containsCollection(it.collections, collectionName.orEmpty()) }
+            !collectionName.isNullOrBlank() -> wallpapers.filter {
+                WallpaperCollectionMapper.containsCollection(it.collections, collectionName.orEmpty())
+            }
             else -> wallpapers
         }
     }
-    val index = viewerWallpapers.indexOfFirst { it.url == wallpaper.url }
-    LaunchedEffect(direction) {
-        if (direction == "none") {
-            delay(3000)
-            showSwipeHint = false
-        }
+    val initialPage = remember(viewerWallpapers, wallpaper.url) {
+        viewerWallpapers.indexOfFirst { it.url == wallpaper.url }.coerceAtLeast(0)
+    }
+    val pagerState = rememberPagerState(
+        initialPage = initialPage,
+        pageCount = { viewerWallpapers.size },
+    )
+    val currentIndex = pagerState.currentPage.coerceIn(0, (viewerWallpapers.size - 1).coerceAtLeast(0))
+    val currentWallpaper = viewerWallpapers.getOrNull(currentIndex) ?: wallpaper
+    val isFavorite = currentWallpaper.url in favoriteUrls
+
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(3000)
+        showSwipeHint = false
     }
 
     fun setSystemBarsVisible(visible: Boolean) {
@@ -134,6 +140,11 @@ fun WallpaperDetailsScreen(
         setSystemBarsVisible(true)
         onDispose { setSystemBarsVisible(true) }
     }
+
+    LaunchedEffect(currentWallpaper.url) {
+        paletteColors = emptyList()
+    }
+
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -141,82 +152,25 @@ fun WallpaperDetailsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .pointerInput(wallpaper.url, index, viewerWallpapers.size) {
-                    var dragDistance = 0f
-                    detectHorizontalDragGestures(
-                        onHorizontalDrag = { _, dragAmount ->
-                            dragDistance += dragAmount
-                            showSwipeHint = false
-                        },
-                        onDragEnd = {
-                            val threshold = 120f
-                            when {
-                                dragDistance <= -threshold && index >= 0 && index < viewerWallpapers.lastIndex -> onWallpaperChange(viewerWallpapers[index + 1])
-                                dragDistance >= threshold && index > 0 -> onWallpaperChange(viewerWallpapers[index - 1])
-                            }
-                            dragDistance = 0f
-                        },
-                        onDragCancel = { dragDistance = 0f },
-                    )
-                },
+                .padding(padding),
             contentAlignment = Alignment.Center,
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(wallpaper.url)
-                    .memoryCacheKey("${wallpaper.url}:$imageRetryKey")
-                    .build(),
-                contentDescription = wallpaper.name,
-                contentScale = ContentScale.Crop,
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier.fillMaxSize(),
-                onLoading = { imageState = ImageState.Loading },
-                onSuccess = { state ->
-                    imageState = ImageState.Success
-                    val bitmap = state.result.image.toBitmap()
-                    scope.launch { paletteColors = extractPalette(bitmap) }
-                },
-                onError = { imageState = ImageState.Error },
-            )
-            when (imageState) {
-                ImageState.Loading -> Surface(
-                    modifier = Modifier.align(Alignment.Center),
-                    shape = CircleShape,
-                    color = Color.Black.copy(alpha = 0.42f),
-                ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.padding(18.dp).size(28.dp),
-                        color = Color.White,
-                    )
-                }
-                ImageState.Error -> Surface(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(32.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    color = Color.Black.copy(alpha = 0.72f),
-                ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Text(stringResource(R.string.viewer_image_error), style = MaterialTheme.typography.titleMedium, color = Color.White)
-                        Text(
-                            stringResource(R.string.viewer_image_error_hint),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White.copy(alpha = 0.78f),
-                        )
-                        androidx.compose.material3.Button(onClick = { imageRetryKey++ }) {
-                            Icon(Icons.Default.Refresh, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(R.string.retry))
-                        }
-                    }
-                }
-                ImageState.Success -> Unit
+                userScrollEnabled = !busy && viewerWallpapers.size > 1,
+                key = { viewerWallpapers[it].url },
+            ) { page ->
+                WallpaperViewerPage(
+                    wallpaper = viewerWallpapers[page],
+                    isCurrent = page == currentIndex,
+                    onPalette = { colors ->
+                        if (page == currentIndex) paletteColors = colors
+                    },
+                )
             }
-            if (showBars && viewerWallpapers.size > 1 && index >= 0) {
+
+            if (showBars && viewerWallpapers.size > 1) {
                 Surface(
                     modifier = Modifier
                         .statusBarsPadding()
@@ -226,18 +180,22 @@ fun WallpaperDetailsScreen(
                     color = colorResource(R.color.viewer_action_pill_background),
                 ) {
                     Text(
-                        text = stringResource(R.string.viewer_position, index + 1, viewerWallpapers.size),
+                        text = stringResource(R.string.viewer_position, currentIndex + 1, viewerWallpapers.size),
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
                         color = colorResource(R.color.viewer_overlay_content),
                         style = MaterialTheme.typography.labelLarge,
                     )
                 }
             }
+
             if (showBars) {
                 Surface(
                     modifier = Modifier
                         .statusBarsPadding()
-                        .padding(start = dimensionResource(R.dimen.screen_padding), top = dimensionResource(R.dimen.viewer_top_padding))
+                        .padding(
+                            start = dimensionResource(R.dimen.screen_padding),
+                            top = dimensionResource(R.dimen.viewer_top_padding),
+                        )
                         .align(Alignment.TopStart)
                         .size(dimensionResource(R.dimen.viewer_navigation_button_size)),
                     shape = CircleShape,
@@ -252,8 +210,9 @@ fun WallpaperDetailsScreen(
                     }
                 }
             }
+
             AnimatedVisibility(
-                visible = showBars && showSwipeHint && viewerWallpapers.size > 1 && index >= 0,
+                visible = showBars && showSwipeHint && viewerWallpapers.size > 1,
                 enter = fadeIn(),
                 exit = fadeOut(),
                 modifier = Modifier.align(Alignment.Center),
@@ -271,26 +230,35 @@ fun WallpaperDetailsScreen(
                     )
                 }
             }
+
             if (showBars) {
                 ViewerActionBar(
                     modifier = Modifier.align(Alignment.BottomCenter),
                     isFavorite = isFavorite,
                     busy = busy,
                     busyLabel = busyLabel,
-                    downloadable = wallpaper.downloadable != false,
+                    downloadable = currentWallpaper.downloadable != false,
                     onInfo = { showInfo = true },
                     onSave = {
                         busy = true
                         busyLabel = context.getString(R.string.viewer_save)
                         scope.launch {
-                            try { snackbar.showSnackbar(saveToGallery(context, wallpaper.url, wallpaper.name) ?: context.getString(R.string.viewer_saved)) }
-                            finally { busy = false; busyLabel = null }
+                            try {
+                                snackbar.showSnackbar(
+                                    saveToGallery(context, currentWallpaper.url, currentWallpaper.name)
+                                        ?: context.getString(R.string.viewer_saved)
+                                )
+                            } finally {
+                                busy = false
+                                busyLabel = null
+                            }
                         }
                     },
                     onApply = { showApplySheet = true },
-                    onFavorite = { favorites.setFavorite(wallpaper.url, !isFavorite) },
+                    onFavorite = { favorites.setFavorite(currentWallpaper.url, !isFavorite) },
                 )
             }
+
             SnackbarHost(
                 hostState = snackbar,
                 modifier = Modifier
@@ -312,8 +280,8 @@ fun WallpaperDetailsScreen(
         ),
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
-        WallpaperInfoSheet(wallpaper, paletteColors, { colorInt ->
-            val hex = "#${(colorInt and 0xFFFFFF).toString(16).padStart(6, '0').uppercase()}"
+        WallpaperInfoSheet(currentWallpaper, paletteColors, { colorInt ->
+            val hex = "#" + (colorInt and 0xFFFFFF).toString(16).padStart(6, '0').uppercase()
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             clipboard.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.viewer_color_clipboard_label), hex))
             scope.launch { snackbar.showSnackbar(context.getString(R.string.viewer_color_copied, hex)) }
@@ -339,27 +307,115 @@ fun WallpaperDetailsScreen(
             busy = busy,
             onHome = {
                 busyLabel = context.getString(R.string.viewer_apply)
-                applyWallpaper(context, wallpaper.url, WallpaperManager.FLAG_SYSTEM, scope, snackbar) { isBusy ->
+                applyWallpaper(context, currentWallpaper.url, WallpaperManager.FLAG_SYSTEM, scope, snackbar) { isBusy ->
                     busy = isBusy
                     if (!isBusy) { busyLabel = null; showApplySheet = false }
                 }
             },
             onLock = {
                 busyLabel = context.getString(R.string.viewer_apply)
-                applyWallpaper(context, wallpaper.url, WallpaperManager.FLAG_LOCK, scope, snackbar) { isBusy ->
+                applyWallpaper(context, currentWallpaper.url, WallpaperManager.FLAG_LOCK, scope, snackbar) { isBusy ->
                     busy = isBusy
                     if (!isBusy) { busyLabel = null; showApplySheet = false }
                 }
             },
             onBoth = {
                 busyLabel = context.getString(R.string.viewer_apply)
-                applyWallpaper(context, wallpaper.url, WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK, scope, snackbar) { isBusy ->
+                applyWallpaper(
+                    context,
+                    currentWallpaper.url,
+                    WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK,
+                    scope,
+                    snackbar,
+                ) { isBusy ->
                     busy = isBusy
                     if (!isBusy) { busyLabel = null; showApplySheet = false }
                 }
             },
             onCancel = { if (!busy) showApplySheet = false },
         )
+    }
+}
+
+@Composable
+private fun WallpaperViewerPage(
+    wallpaper: Wallpaper,
+    isCurrent: Boolean,
+    onPalette: (List<Int>) -> Unit,
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var imageRetryKey by remember(wallpaper.url) { mutableStateOf(0) }
+    var imageState by remember(wallpaper.url) { mutableStateOf(ImageState.Loading) }
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(context)
+                .data(wallpaper.url)
+                .memoryCacheKey(wallpaper.url + ":" + imageRetryKey)
+                .build(),
+            contentDescription = wallpaper.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+            onLoading = { imageState = ImageState.Loading },
+            onSuccess = { state ->
+                imageState = ImageState.Success
+                if (isCurrent) {
+                    val bitmap = state.result.image.toBitmap()
+                    scope.launch { onPalette(extractPalette(bitmap)) }
+                }
+            },
+            onError = { imageState = ImageState.Error },
+        )
+
+        when (imageState) {
+            ImageState.Loading -> Surface(
+                modifier = Modifier.align(Alignment.Center),
+                shape = CircleShape,
+                color = Color.Black.copy(alpha = 0.42f),
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.padding(18.dp).size(28.dp),
+                    color = Color.White,
+                )
+            }
+            ImageState.Error -> Surface(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(32.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = Color.Black.copy(alpha = 0.72f),
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text(
+                        stringResource(R.string.viewer_image_error),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White,
+                    )
+                    Text(
+                        stringResource(R.string.viewer_image_error_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.78f),
+                    )
+                    androidx.compose.material3.Button(onClick = {
+                        imageRetryKey++
+                        imageState = ImageState.Loading
+                    }) {
+                        Icon(Icons.Default.Refresh, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.retry))
+                    }
+                }
+            }
+            ImageState.Success -> Unit
+        }
     }
 }
 

@@ -76,8 +76,8 @@ import com.sipun.superiorwalls.navigation.AppDestination
 import com.sipun.superiorwalls.ui.theme.LocalAnimationsEnabled
 import com.sipun.superiorwalls.ui.theme.SuperiorwallsTheme
 
-private fun detailsRoute(url: String, mode: String = "all", collection: String? = null, direction: String = "none"): String {
-    val base = "${AppDestination.Details.routeBase}/${Uri.encode(url)}?mode=${Uri.encode(mode)}&direction=${Uri.encode(direction)}"
+private fun detailsRoute(url: String, mode: String = "all", collection: String? = null): String {
+    val base = "${AppDestination.Details.routeBase}/${Uri.encode(url)}?mode=${Uri.encode(mode)}"
     return if (collection == null) base else "$base&collection=${Uri.encode(collection)}"
 }
 
@@ -144,17 +144,6 @@ fun SuperiorwallsApp() {
         val exit: ExitTransition = if (animationsEnabled) fadeOut(tween(350)) + slideOutHorizontally(tween(350), targetOffsetX = { -it }) else ExitTransition.None
         val popEnter: EnterTransition = if (animationsEnabled) fadeIn(tween(430)) + slideInHorizontally(tween(430), initialOffsetX = { -it }) else EnterTransition.None
         val popExit: ExitTransition = if (animationsEnabled) fadeOut(tween(350)) + slideOutHorizontally(tween(350), targetOffsetX = { it }) else ExitTransition.None
-        fun viewerEnter(direction: String?): EnterTransition = when (direction) {
-            "forward" -> if (animationsEnabled) fadeIn(tween(300)) + slideInHorizontally(tween(300), initialOffsetX = { it }) else EnterTransition.None
-            "backward" -> if (animationsEnabled) fadeIn(tween(300)) + slideInHorizontally(tween(300), initialOffsetX = { -it }) else EnterTransition.None
-            else -> enter
-        }
-        fun viewerExit(direction: String?): ExitTransition = when (direction) {
-            "forward" -> if (animationsEnabled) fadeOut(tween(260)) + slideOutHorizontally(tween(260), targetOffsetX = { -it }) else ExitTransition.None
-            "backward" -> if (animationsEnabled) fadeOut(tween(260)) + slideOutHorizontally(tween(260), targetOffsetX = { it }) else ExitTransition.None
-            else -> exit
-        }
-
         Scaffold(
             contentWindowInsets = if (isDetails) WindowInsets(0, 0, 0, 0) else WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
             modifier = Modifier.fillMaxSize(),
@@ -173,8 +162,8 @@ fun SuperiorwallsApp() {
                         navController = navController,
                         startDestination = AppDestination.Home.route,
                         modifier = Modifier.weight(1f),
-                        enterTransition = { viewerEnter(targetState.arguments?.getString("direction")) },
-                        exitTransition = { viewerExit(targetState.arguments?.getString("direction")) },
+                        enterTransition = { enter },
+                        exitTransition = { exit },
                         popEnterTransition = { popEnter },
                         popExitTransition = { popExit },
                         predictivePopEnterTransition = { _ -> popEnter },
@@ -188,17 +177,18 @@ fun SuperiorwallsApp() {
                             val collection = entry.arguments?.getString("name")?.let { name -> collections.firstOrNull { it.name == name } }
                             if (collection == null) navController.popBackStack() else CollectionWallpapersScreen(collection) { wallpaper -> navController.navigate(detailsRoute(wallpaper.url, collection = collection.name)) }
                         }
-                        composable(AppDestination.Details.route, listOf(navArgument("url") { type = NavType.StringType }, navArgument("mode") { type = NavType.StringType; defaultValue = "all" }, navArgument("collection") { type = NavType.StringType; nullable = true; defaultValue = null }, navArgument("direction") { type = NavType.StringType; defaultValue = "none" })) { entry ->
+                        composable(AppDestination.Details.route, listOf(navArgument("url") { type = NavType.StringType }, navArgument("mode") { type = NavType.StringType; defaultValue = "all" }, navArgument("collection") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
                             val wallpaper = entry.arguments?.getString("url")?.let { url -> wallpapers.firstOrNull { it.url == url } }
                             val mode = entry.arguments?.getString("mode") ?: "all"
                             val collection = entry.arguments?.getString("collection")
-                            val direction = entry.arguments?.getString("direction") ?: "none"
-                            if (wallpaper == null) navController.popBackStack() else WallpaperDetailsScreen(wallpaper, wallpapers, favoriteUrls, mode, collection, direction, onWallpaperChange = { next ->
-                                val currentIndex = wallpapers.indexOfFirst { it.url == wallpaper.url }
-                                val nextIndex = wallpapers.indexOfFirst { it.url == next.url }
-                                val direction = if (nextIndex > currentIndex) "forward" else "backward"
-                                navController.navigate(detailsRoute(next.url, mode, collection, direction)) { popUpTo(AppDestination.Details.route) { inclusive = true } }
-                            }, onBack = { navController.popBackStack() })
+                            if (wallpaper == null) navController.popBackStack() else WallpaperDetailsScreen(
+                                wallpaper = wallpaper,
+                                wallpapers = wallpapers,
+                                favoriteUrls = favoriteUrls,
+                                mode = mode,
+                                collectionName = collection,
+                                onBack = { navController.popBackStack() },
+                            )
                         }
                     }
                 }
