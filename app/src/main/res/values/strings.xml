@@ -16,6 +16,7 @@
     <string name="favorites_title">Favorites</string>
     <string name="favorites_subtitle">Your saved wallpapers.</string>
     <string name="favorites_empty">No favorite wallpapers yet.</string>
+    <string name="favorites_empty_hint">Tap the heart on any wallpaper to save it here.</string>
     <string name="settings_title">Settings</string>
     <string name="settings_subtitle">Make the app yours.</string>
     <string name="settings_appearance">Appearance</string>
@@ -94,6 +95,13 @@
     <string name="viewer_lock_screen">Lock screen</string>
     <string name="viewer_both">Both</string>
     <string name="viewer_cancel">Cancel</string>
+    <string name="viewer_saving">Saving…</string>
+    <string name="viewer_position">%1$d / %2$d</string>
+    <string name="viewer_swipe_hint">Swipe left or right to browse</string>
+    <string name="viewer_image_error">Couldn’t load wallpaper</string>
+    <string name="viewer_image_error_hint">Check your connection and try again.</string>
+    <string name="viewer_collection">Collection</string>
+    <string name="viewer_aspect_ratio">Aspect ratio</string>
     <string name="wallpaper_error_load">Could not load wallpaper</string>
     <string name="wallpaper_error_apply">Could not apply wallpaper</string>
     <string name="wallpaper_error_wifi_required">Wi-Fi is required for downloads</string>
