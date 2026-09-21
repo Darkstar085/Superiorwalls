@@ -175,7 +175,7 @@ fun SuperiorwallsApp() {
                         composable(AppDestination.Settings.route) { SettingsScreen(settings) }
                         composable(AppDestination.CollectionDetails.route, listOf(navArgument("name") { type = NavType.StringType })) { entry ->
                             val collection = entry.arguments?.getString("name")?.let { name -> collections.firstOrNull { it.name == name } }
-                            if (collection == null) navController.popBackStack() else CollectionWallpapersScreen(collection) { wallpaper -> navController.navigate(detailsRoute(wallpaper.url, collection = collection.name)) }
+                            if (collection == null) navController.popBackStack() else CollectionWallpapersScreen(collection) { wallpaper -> navController.navigate(detailsRoute(wallpaper.url)) }
                         }
                         composable(AppDestination.Details.route, listOf(navArgument("url") { type = NavType.StringType }, navArgument("mode") { type = NavType.StringType; defaultValue = "all" }, navArgument("collection") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
                             val wallpaper = entry.arguments?.getString("url")?.let { url -> wallpapers.firstOrNull { it.url == url } }
@@ -183,10 +183,14 @@ fun SuperiorwallsApp() {
                             val collection = entry.arguments?.getString("collection")
                             if (wallpaper == null) navController.popBackStack() else WallpaperDetailsScreen(
                                 wallpaper = wallpaper,
-                                wallpapers = wallpapers,
+                                wallpapers = if (!collection.isNullOrBlank()) {
+                                    collections.firstOrNull { it.name == collection }?.wallpapers ?: emptyList()
+                                } else {
+                                    wallpapers
+                                },
                                 favoriteUrls = favoriteUrls,
                                 mode = mode,
-                                collectionName = collection,
+                                collectionName = null,
                                 onBack = { navController.popBackStack() },
                             )
                         }
