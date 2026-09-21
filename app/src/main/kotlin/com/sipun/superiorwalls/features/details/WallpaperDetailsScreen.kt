@@ -124,6 +124,10 @@ fun WallpaperDetailsScreen(
         showSwipeHint = false
     }
 
+    LaunchedEffect(pagerState.currentPage) {
+        if (pagerState.currentPage != initialPage) showSwipeHint = false
+    }
+
     fun setSystemBarsVisible(visible: Boolean) {
         showBars = visible
         activity?.window?.let { window ->
@@ -159,6 +163,7 @@ fun WallpaperDetailsScreen(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
                 userScrollEnabled = !busy && viewerWallpapers.size > 1,
+                beyondViewportPageCount = 1,
                 key = { viewerWallpapers[it].url },
             ) { page ->
                 WallpaperViewerPage(
