@@ -27,10 +27,7 @@ android {
             }
             if (!keystorePassword.isNullOrBlank()) {
                 storePassword = keystorePassword
-                val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
-                if (!keyPassword.isNullOrBlank()) {
-                    this.keyPassword = keyPassword
-                }
+                keyPassword = keystorePassword
             }
             if (!keyAlias.isNullOrBlank()) {
                 this.keyAlias = keyAlias
