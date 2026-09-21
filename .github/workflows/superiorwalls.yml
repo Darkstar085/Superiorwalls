@@ -244,19 +244,57 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
+          set -euo pipefail
           gh api --paginate "/repos/$REPO/actions/runs?per_page=100" \
             --jq '.workflow_runs[] | [.workflow_id, .id, .created_at] | @tsv' \
             | sort -k1,1 -k3,3r \
             | awk 'seen[$1]++ {print $2}' \
-            | xargs -r -I{} gh api --method DELETE "/repos/$REPO/actions/runs/{}"
+            | while IFS= read -r run_id; do
+                [[ -z "$run_id" ]] && continue
+                echo "Deleting workflow run $run_id"
+                gh api --method DELETE "/repos/$REPO/actions/runs/$run_id"
+              done
 
       - name: Remove old caches
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
+          set -euo pipefail
+
           gh api --paginate "/repos/$REPO/actions/caches?per_page=100" \
             --jq '.actions_caches[] | [.key, .id, .created_at] | @tsv' \
-            | sort -k1,1 -k3,3r \
-            | awk 'seen[$1]++ {print $2}' \
-            | xargs -r -I{} gh api --method DELETE "/repos/$REPO/actions/caches/{}"
+            | sort -k3,3r \
+            | awk '
+                {
+                  key=$1
+                  normalized=key
+                  sub(/-[0-9a-f]{40}$/, "", normalized)
+
+                  if (seen[normalized]++) {
+                    print $2
+                  }
+                }
+              ' \
+            | while IFS= read -r cache_id; do
+                [[ -z "$cache_id" ]] && continue
+                echo "Deleting stale cache $cache_id"
+                gh api --method DELETE "/repos/$REPO/actions/caches/$cache_id"
+              done
+
+
+      - name: Remove expired artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh api --paginate "/repos/$REPO/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | [.id, .expired] | @tsv' \
+            | while IFS=$'\t' read -r artifact_id expired; do
+                [[ -z "$artifact_id" ]] && continue
+                if [[ "$expired" == "true" ]]; then
+                  echo "Deleting expired artifact $artifact_id"
+                  gh api --method DELETE "/repos/$REPO/actions/artifacts/$artifact_id"
+                fi
+              done
