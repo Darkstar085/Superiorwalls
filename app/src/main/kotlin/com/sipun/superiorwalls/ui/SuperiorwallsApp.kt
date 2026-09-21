@@ -188,11 +188,12 @@ fun SuperiorwallsApp() {
                             val collection = entry.arguments?.getString("name")?.let { name -> collections.firstOrNull { it.name == name } }
                             if (collection == null) navController.popBackStack() else CollectionWallpapersScreen(collection) { wallpaper -> navController.navigate(detailsRoute(wallpaper.url, collection = collection.name)) }
                         }
-                        composable(AppDestination.Details.route, listOf(navArgument("url") { type = NavType.StringType }, navArgument("mode") { type = NavType.StringType; defaultValue = "all" }, navArgument("collection") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
+                        composable(AppDestination.Details.route, listOf(navArgument("url") { type = NavType.StringType }, navArgument("mode") { type = NavType.StringType; defaultValue = "all" }, navArgument("collection") { type = NavType.StringType; nullable = true; defaultValue = null }, navArgument("direction") { type = NavType.StringType; defaultValue = "none" })) { entry ->
                             val wallpaper = entry.arguments?.getString("url")?.let { url -> wallpapers.firstOrNull { it.url == url } }
                             val mode = entry.arguments?.getString("mode") ?: "all"
                             val collection = entry.arguments?.getString("collection")
-                            if (wallpaper == null) navController.popBackStack() else WallpaperDetailsScreen(wallpaper, wallpapers, favoriteUrls, mode, collection, onWallpaperChange = { next ->
+                            val direction = entry.arguments?.getString("direction") ?: "none"
+                            if (wallpaper == null) navController.popBackStack() else WallpaperDetailsScreen(wallpaper, wallpapers, favoriteUrls, mode, collection, direction, onWallpaperChange = { next ->
                                 val currentIndex = wallpapers.indexOfFirst { it.url == wallpaper.url }
                                 val nextIndex = wallpapers.indexOfFirst { it.url == next.url }
                                 val direction = if (nextIndex > currentIndex) "forward" else "backward"

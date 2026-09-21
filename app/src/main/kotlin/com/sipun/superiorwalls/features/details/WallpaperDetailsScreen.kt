@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -70,6 +71,7 @@ import com.sipun.superiorwalls.domain.model.Wallpaper
 import com.sipun.superiorwalls.features.system.saveToGallery
 import com.sipun.superiorwalls.features.system.setAsWallpaper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -81,6 +83,7 @@ fun WallpaperDetailsScreen(
     favoriteUrls: Set<String>,
     mode: String = "all",
     collectionName: String? = null,
+    direction: String = "none",
     onWallpaperChange: (Wallpaper) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -95,7 +98,7 @@ fun WallpaperDetailsScreen(
     var showInfo by remember { mutableStateOf(false) }
     var showApplySheet by remember { mutableStateOf(false) }
     var showBars by remember { mutableStateOf(true) }
-    var showSwipeHint by rememberSaveable { mutableStateOf(true) }
+    var showSwipeHint by rememberSaveable(direction) { mutableStateOf(direction == "none") }
     var imageRetryKey by remember(wallpaper.url) { mutableStateOf(0) }
     var imageState by remember(wallpaper.url) { mutableStateOf(ImageState.Loading) }
     var paletteColors by remember(wallpaper.url) { mutableStateOf<List<Int>>(emptyList()) }
@@ -108,6 +111,12 @@ fun WallpaperDetailsScreen(
         }
     }
     val index = viewerWallpapers.indexOfFirst { it.url == wallpaper.url }
+    LaunchedEffect(direction) {
+        if (direction == "none") {
+            delay(3000)
+            showSwipeHint = false
+        }
+    }
 
     fun setSystemBarsVisible(visible: Boolean) {
         showBars = visible
@@ -295,11 +304,16 @@ fun WallpaperDetailsScreen(
     if (showInfo) ModalBottomSheet(
         onDismissRequest = { showInfo = false },
         sheetState = sheetState,
-        shape = RoundedCornerShape(dimensionResource(R.dimen.viewer_sheet_corner_radius)),
+        shape = RoundedCornerShape(
+            topStart = dimensionResource(R.dimen.viewer_sheet_corner_radius),
+            topEnd = dimensionResource(R.dimen.viewer_sheet_corner_radius),
+            bottomStart = 0.dp,
+            bottomEnd = 0.dp,
+        ),
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         WallpaperInfoSheet(wallpaper, paletteColors, { colorInt ->
-            val hex = "#${colorInt.toString(16).padStart(6, '0').uppercase()}"
+            val hex = "#${(colorInt and 0xFFFFFF).toString(16).padStart(6, '0').uppercase()}"
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             clipboard.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.viewer_color_clipboard_label), hex))
             scope.launch { snackbar.showSnackbar(context.getString(R.string.viewer_color_copied, hex)) }
@@ -557,7 +571,7 @@ private fun WallpaperInfoSheet(wallpaper: Wallpaper, paletteColors: List<Int>, o
                         val color = Color(colorInt)
                         val contentColor = if (color.luminance() > 0.55f) colorResource(R.color.viewer_swatch_dark_content) else colorResource(R.color.viewer_swatch_light_content)
                         Surface(onClick = { onCopyColor(colorInt) }, modifier = Modifier.weight(1f).height(dimensionResource(R.dimen.viewer_color_swatch_height)), shape = RoundedCornerShape(dimensionResource(R.dimen.viewer_action_spacing)), color = color) {
-                            Box(contentAlignment = Alignment.Center) { Text("#${colorInt.toString(16).padStart(6, '0').uppercase()}", color = contentColor, style = MaterialTheme.typography.labelLarge) }
+                            Box(contentAlignment = Alignment.Center) { Text("#${(colorInt and 0xFFFFFF).toString(16).padStart(6, '0').uppercase()}", color = contentColor, style = MaterialTheme.typography.labelLarge) }
                         }
                     }
                     repeat(3 - rowColors.size) { Spacer(Modifier.weight(1f)) }
