@@ -92,10 +92,37 @@ jobs:
           {
             echo "## What's new"
             echo
-            git log "$range" --no-merges --pretty=format:'%s' \
-              | sed -nE 's/^(feat|style|ui|fix|perf|security)(\([^)]*\))?:[[:space:]]*//p' \
-              | sed '/^[[:space:]]*$/d' \
-              | awk '!seen[$0]++ { first=toupper(substr($0,1,1)); print "- " first substr($0,2) }'
+            git log "$range" --no-merges --pretty=format:'%s' |
+              awk '
+                {
+                  subject=$0
+                  type="Changed"
+                  if (subject ~ /^feat(\([^)]*\))?:[[:space:]]*/) type="New"
+                  else if (subject ~ /^fix(\([^)]*\))?:[[:space:]]*/) type="Fixed"
+                  else if (subject ~ /^ci(\([^)]*\))?:[[:space:]]*/) type="CI"
+                  else if (subject ~ /^perf(\([^)]*\))?:[[:space:]]*/) type="Performance"
+                  else if (subject ~ /^refactor(\([^)]*\))?:[[:space:]]*/) type="Refactor"
+                  else if (subject ~ /^(ui|style)(\([^)]*\))?:[[:space:]]*/) type="UI"
+                  else if (subject ~ /^security(\([^)]*\))?:[[:space:]]*/) type="Security"
+                  else if (subject ~ /^docs(\([^)]*\))?:[[:space:]]*/) type="Docs"
+                  else if (subject ~ /^build(\([^)]*\))?:[[:space:]]*/) type="Build"
+                  else if (subject ~ /^test(\([^)]*\))?:[[:space:]]*/) type="Tests"
+                  else if (subject ~ /^chore(\([^)]*\))?:[[:space:]]*/) type="Chore"
+                  sub(/^[^:]+:[[:space:]]*/, "", subject)
+                  key=type SUBSEP subject
+                  if (!seen[key]++ && subject != "") groups[type]=groups[type] "- " subject "\n"
+                }
+                END {
+                  split("New Fixed CI Performance Refactor UI Security Docs Build Tests Chore Changed", order)
+                  for (i=1; i<=12; i++) {
+                    type=order[i]
+                    if (groups[type] != "") {
+                      print "### " type
+                      printf "%s", groups[type]
+                      print ""
+                    }
+                  }
+                }'
             if [[ -n "$previous_tag" ]]; then
               echo
               echo "**Full Changelog:** https://github.com/${GITHUB_REPOSITORY}/compare/${previous_tag}...${TAG}"
@@ -126,6 +153,24 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v6
+
+      - name: Restore debug signing key
+        id: debug-key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: superiorwalls-debug-keystore-v1
+
+      - name: Generate debug signing key
+        if: steps.debug-key.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.android
+          keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Verify debug signing key
+        run: keytool -list -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey >/dev/null
+
       - run: ./gradlew assembleDebug
 
       - name: Rename debug APK
@@ -138,6 +183,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
         run: |
+          set -euo pipefail
           APK_PATH="Superiorwalls_${GITHUB_SHA::7}.apk"
           export APK_PATH
           python3 -m pip install --disable-pip-version-check telethon==1.45.0 cryptg
@@ -153,6 +199,16 @@ jobs:
                   os.environ["TELEGRAM_API_HASH"],
               )
               await client.start(bot_token=os.environ["TELEGRAM_BOT_TOKEN"])
+              last_reported = -5
+
+              def progress(current, total):
+                  nonlocal last_reported
+                  percent = int(current * 100 / total) if total else 0
+                  step = min(100, (percent // 5) * 5)
+                  if step >= last_reported + 5:
+                      last_reported = step
+                      print(f"Telegram upload: {percent}% ({current / 1048576:.1f} MiB / {total / 1048576:.1f} MiB)", flush=True)
+
               try:
                   await asyncio.wait_for(
                       client.send_file(
@@ -161,6 +217,7 @@ jobs:
                           caption=f"Superiorwalls debug APK - {os.environ['GITHUB_SHA'][:7]}",
                           force_document=True,
                           part_size_kb=512,
+                          progress_callback=progress,
                       ),
                       timeout=600,
                   )
@@ -169,7 +226,6 @@ jobs:
 
           asyncio.run(main())
           PY
-
 
   cleanup:
     if: inputs.action == 'cleanup'
