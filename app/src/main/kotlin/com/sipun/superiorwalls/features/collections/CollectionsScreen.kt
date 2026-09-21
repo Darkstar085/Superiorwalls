@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.CollectionsBookmark
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.domain.model.Collection
@@ -40,7 +42,16 @@ import com.sipun.superiorwalls.ui.theme.LocalAnimationsEnabled
 @Composable
 fun CollectionsScreen(collections: List<Collection>, onCollectionClick: (Collection) -> Unit) {
     if (collections.isEmpty()) {
-        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(dimensionResource(R.dimen.screen_padding)), contentAlignment = Alignment.Center) { Text(stringResource(R.string.collections_empty)) }
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(dimensionResource(R.dimen.screen_padding)), contentAlignment = Alignment.Center) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.compact_spacing)),
+            ) {
+                Icon(Icons.Default.CollectionsBookmark, contentDescription = null, modifier = Modifier.height(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.collections_empty), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.collections_empty_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
         return
     }
     LazyColumn(

@@ -27,6 +27,14 @@ class FavoriteWallpaperStore(context: Context) {
         preferences.edit().putStringSet(KEY_URLS, urls).apply()
     }
 
+    fun pruneFavorites(validUrls: Set<String>) {
+        val urls = favoriteUrls()
+        val pruned = urls.intersect(validUrls)
+        if (pruned.size != urls.size) {
+            preferences.edit().putStringSet(KEY_URLS, pruned).apply()
+        }
+    }
+
     companion object {
         private const val PREFERENCES_NAME = "favorites"
         private const val KEY_URLS = "wallpaper_urls"

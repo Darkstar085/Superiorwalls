@@ -11,6 +11,7 @@
     <string name="collections_title">Collections</string>
     <string name="collections_subtitle">Browse wallpapers by theme.</string>
     <string name="collections_empty">No collections available yet.</string>
+    <string name="collections_empty_hint">Collections will appear here when wallpapers are available.</string>
     <string name="collection_empty">No wallpapers in this collection yet.</string>
     <string name="collection_count">%1$d wallpapers</string>
     <string name="favorites_title">Favorites</string>
@@ -96,6 +97,7 @@
     <string name="viewer_both">Both</string>
     <string name="viewer_cancel">Cancel</string>
     <string name="viewer_saving">Saving…</string>
+    <string name="viewer_applying">Applying…</string>
     <string name="viewer_position">%1$d / %2$d</string>
     <string name="viewer_swipe_hint">Swipe left or right to browse</string>
     <string name="viewer_image_error">Couldn’t load wallpaper</string>

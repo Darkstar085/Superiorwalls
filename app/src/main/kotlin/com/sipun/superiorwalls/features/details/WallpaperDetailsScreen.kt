@@ -7,6 +7,9 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Build
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -88,6 +91,7 @@ fun WallpaperDetailsScreen(
     val snackbar = remember { SnackbarHostState() }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var busy by remember { mutableStateOf(false) }
+    var busyLabel by remember { mutableStateOf<String?>(null) }
     var showInfo by remember { mutableStateOf(false) }
     var showApplySheet by remember { mutableStateOf(false) }
     var showBars by remember { mutableStateOf(true) }
@@ -239,11 +243,14 @@ fun WallpaperDetailsScreen(
                     }
                 }
             }
-            if (showBars && showSwipeHint && viewerWallpapers.size > 1 && index >= 0) {
+            AnimatedVisibility(
+                visible = showBars && showSwipeHint && viewerWallpapers.size > 1 && index >= 0,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier.align(Alignment.Center),
+            ) {
                 Surface(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(horizontal = 32.dp),
+                    modifier = Modifier.padding(horizontal = 32.dp),
                     shape = RoundedCornerShape(24.dp),
                     color = Color.Black.copy(alpha = 0.58f),
                 ) {
@@ -260,13 +267,15 @@ fun WallpaperDetailsScreen(
                     modifier = Modifier.align(Alignment.BottomCenter),
                     isFavorite = isFavorite,
                     busy = busy,
+                    busyLabel = busyLabel,
                     downloadable = wallpaper.downloadable != false,
                     onInfo = { showInfo = true },
                     onSave = {
                         busy = true
+                        busyLabel = context.getString(R.string.viewer_save)
                         scope.launch {
                             try { snackbar.showSnackbar(saveToGallery(context, wallpaper.url, wallpaper.name) ?: context.getString(R.string.viewer_saved)) }
-                            finally { busy = false }
+                            finally { busy = false; busyLabel = null }
                         }
                     },
                     onApply = { showApplySheet = true },
@@ -315,21 +324,24 @@ fun WallpaperDetailsScreen(
         ApplyWallpaperSheet(
             busy = busy,
             onHome = {
+                busyLabel = context.getString(R.string.viewer_apply)
                 applyWallpaper(context, wallpaper.url, WallpaperManager.FLAG_SYSTEM, scope, snackbar) { isBusy ->
                     busy = isBusy
-                    if (!isBusy) showApplySheet = false
+                    if (!isBusy) { busyLabel = null; showApplySheet = false }
                 }
             },
             onLock = {
+                busyLabel = context.getString(R.string.viewer_apply)
                 applyWallpaper(context, wallpaper.url, WallpaperManager.FLAG_LOCK, scope, snackbar) { isBusy ->
                     busy = isBusy
-                    if (!isBusy) showApplySheet = false
+                    if (!isBusy) { busyLabel = null; showApplySheet = false }
                 }
             },
             onBoth = {
+                busyLabel = context.getString(R.string.viewer_apply)
                 applyWallpaper(context, wallpaper.url, WallpaperManager.FLAG_SYSTEM or WallpaperManager.FLAG_LOCK, scope, snackbar) { isBusy ->
                     busy = isBusy
-                    if (!isBusy) showApplySheet = false
+                    if (!isBusy) { busyLabel = null; showApplySheet = false }
                 }
             },
             onCancel = { if (!busy) showApplySheet = false },
@@ -460,6 +472,7 @@ private fun ViewerActionBar(
     modifier: Modifier = Modifier,
     isFavorite: Boolean,
     busy: Boolean,
+    busyLabel: String?,
     downloadable: Boolean,
     onInfo: () -> Unit,
     onSave: () -> Unit,
@@ -488,22 +501,23 @@ private fun ViewerActionBar(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_info), Icons.Default.Info, onInfo, !busy, busy)
-            ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_save), Icons.Default.Download, onSave, !busy && downloadable, busy)
-            ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_apply), Icons.Default.Wallpaper, onApply, !busy && downloadable, busy)
-            ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_favorite), if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, onFavorite, !busy, busy)
+            ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_info), Icons.Default.Info, onInfo, !busy, busyLabel)
+            ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_save), Icons.Default.Download, onSave, !busy && downloadable, busyLabel)
+            ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_apply), Icons.Default.Wallpaper, onApply, !busy && downloadable, busyLabel)
+            ViewerAction(Modifier.weight(1f), stringResource(R.string.viewer_favorite), if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, onFavorite, !busy, busyLabel)
         }
     }
 }
 
 @Composable
-private fun ViewerAction(modifier: Modifier, label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit, enabled: Boolean = true, busy: Boolean = false) {
+private fun ViewerAction(modifier: Modifier, label: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit, enabled: Boolean = true, busyLabel: String? = null) {
+    val isBusy = busyLabel == label
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         IconButton(onClick = onClick, enabled = enabled) {
-            if (enabled) Icon(icon, contentDescription = label)
-            else CircularProgressIndicator(modifier = Modifier.size(dimensionResource(R.dimen.viewer_action_icon_size)))
+            if (isBusy) CircularProgressIndicator(modifier = Modifier.size(dimensionResource(R.dimen.viewer_action_icon_size)))
+            else Icon(icon, contentDescription = label)
         }
-        Text(if (busy) stringResource(R.string.viewer_saving) else label, style = MaterialTheme.typography.labelMedium, maxLines = 1, modifier = Modifier.offset(y = (-6).dp))
+        Text(if (isBusy) if (label == stringResource(R.string.viewer_save)) stringResource(R.string.viewer_saving) else stringResource(R.string.viewer_applying) else label, style = MaterialTheme.typography.labelMedium, maxLines = 1, modifier = Modifier.offset(y = (-6).dp))
     }
 }
 

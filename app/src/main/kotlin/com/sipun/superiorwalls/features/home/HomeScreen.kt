@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.sipun.superiorwalls.R
 import com.sipun.superiorwalls.data.repository.FavoriteWallpaperStore
 import com.sipun.superiorwalls.domain.model.Wallpaper
@@ -116,13 +117,38 @@ fun WallpaperGrid(wallpapers: List<Wallpaper>, onWallpaperClick: (Wallpaper) -> 
     val context = LocalContext.current
     val model = remember(wallpaper.url, wallpaper.thumbnail) { wallpaperPreviewUrl(wallpaper) }
     var imageLoaded by remember(model) { mutableStateOf(false) }
+    var imageError by remember(model) { mutableStateOf(false) }
+    var retryKey by remember(model) { mutableStateOf(0) }
     val motionSpec = if (animationsEnabled) tween<Float>(260) else snap()
     val placeholderAlpha by animateFloatAsState(if (imageLoaded) 0f else 1f, motionSpec, label = "preview_placeholder")
     val imageAlpha by animateFloatAsState(if (imageLoaded) 1f else 0f, motionSpec, label = "preview_alpha")
     val imageOffset by animateDpAsState(if (imageLoaded) 0.dp else 6.dp, if (animationsEnabled) tween(260) else snap(), label = "preview_offset")
     Box(Modifier.fillMaxWidth().aspectRatio(0.72f)) {
         Box(Modifier.fillMaxSize().alpha(placeholderAlpha).background(MaterialTheme.colorScheme.surfaceVariant))
-        AsyncImage(model = model, contentDescription = wallpaper.name, contentScale = ContentScale.Crop, imageLoader = WallpaperPreviewImageLoader.get(context), modifier = Modifier.fillMaxSize().alpha(imageAlpha).offset(y = imageOffset), onLoading = { imageLoaded = false }, onSuccess = { imageLoaded = true }, onError = { imageLoaded = false })
+        AsyncImage(
+            model = ImageRequest.Builder(context)
+                .data(model)
+                .memoryCacheKey("${model ?: wallpaper.url}:$retryKey")
+                .build(),
+            contentDescription = wallpaper.name,
+            contentScale = ContentScale.Crop,
+            imageLoader = WallpaperPreviewImageLoader.get(context),
+            modifier = Modifier.fillMaxSize().alpha(imageAlpha).offset(y = imageOffset),
+            onLoading = { imageLoaded = false; imageError = false },
+            onSuccess = { imageLoaded = true; imageError = false },
+            onError = { imageLoaded = false; imageError = true },
+        )
+        if (imageError) {
+            Surface(
+                modifier = Modifier.align(Alignment.Center),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.72f),
+            ) {
+                IconButton(onClick = { retryKey++ }) {
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.retry), tint = MaterialTheme.colorScheme.onSurface)
+                }
+            }
+        }
     }
 }
 
