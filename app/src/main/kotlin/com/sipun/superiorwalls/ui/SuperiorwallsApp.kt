@@ -190,7 +190,7 @@ fun SuperiorwallsApp() {
                                 },
                                 favoriteUrls = favoriteUrls,
                                 mode = mode,
-                                collectionName = null,
+                                collectionName = collection,
                                 onBack = { navController.popBackStack() },
                             )
                         }
