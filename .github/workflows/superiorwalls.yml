@@ -49,6 +49,9 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
       - name: Build signed APK
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -170,6 +173,9 @@ jobs:
 
       - name: Verify debug signing key
         run: keytool -list -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey >/dev/null
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
 
       - run: ./gradlew assembleDebug
 

@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -42,7 +41,9 @@ fun FavoritesScreen(
     val favorites = wallpapers.filter { it.url in favoriteUrls }
 
     LaunchedEffect(wallpapers) {
-        store.pruneFavorites(wallpapers.map { it.url }.toSet())
+        if (wallpapers.isNotEmpty()) {
+            store.pruneFavorites(wallpapers.map { it.url }.toSet())
+        }
     }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {

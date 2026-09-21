@@ -78,7 +78,7 @@ fun HomeScreen(onWallpaperClick: (Wallpaper) -> Unit, viewModel: HomeViewModel =
                 when {
                     !state.hasLoadedRemoteData -> EmptyContent(state.errorMessage, onRetry = viewModel::refresh)
                     state.wallpapers.isEmpty() -> EmptyContent(state.errorMessage, onRetry = viewModel::refresh)
-                    else -> WallpaperGrid(state.wallpapers, onWallpaperClick, state.errorMessage, favoriteUrls, onFavoriteToggle = { wallpaper -> favoriteStore.setFavorite(wallpaper.url, wallpaper.url !in favoriteUrls) }, showHeader = true)
+                    else -> WallpaperGrid(state.wallpapers, onWallpaperClick, state.errorMessage, favoriteUrls, onFavoriteToggle = { wallpaper -> favoriteStore.setFavorite(wallpaper.url, wallpaper.url !in favoriteUrls) }, showHeader = true, onMessageRetry = viewModel::refresh)
                 }
             }
         }
@@ -86,14 +86,14 @@ fun HomeScreen(onWallpaperClick: (Wallpaper) -> Unit, viewModel: HomeViewModel =
 }
 
 @Composable
-fun WallpaperGrid(wallpapers: List<Wallpaper>, onWallpaperClick: (Wallpaper) -> Unit, message: String? = null, favoriteUrls: Set<String> = emptySet(), onFavoriteToggle: (Wallpaper) -> Unit = {}, showHeader: Boolean = false) {
+fun WallpaperGrid(wallpapers: List<Wallpaper>, onWallpaperClick: (Wallpaper) -> Unit, message: String? = null, favoriteUrls: Set<String> = emptySet(), onFavoriteToggle: (Wallpaper) -> Unit = {}, showHeader: Boolean = false, onMessageRetry: (() -> Unit)? = null) {
     val animationsEnabled = LocalAnimationsEnabled.current
     Box(Modifier.fillMaxSize()) {
         LazyVerticalGrid(columns = GridCells.Adaptive(minSize = dimensionResource(R.dimen.wallpaper_grid_min_size)), contentPadding = PaddingValues(dimensionResource(R.dimen.screen_padding)), horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.grid_spacing)), verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.grid_spacing)), modifier = Modifier.fillMaxSize()) {
             if (showHeader) item(span = { GridItemSpan(maxLineSpan) }) { HomeHeader() }
             items(wallpapers, key = { it.url }) { wallpaper -> WallpaperCard(wallpaper, wallpaper.url in favoriteUrls, onWallpaperClick, onFavoriteToggle, animationsEnabled) }
         }
-        if (message != null) Surface(shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)), tonalElevation = dimensionResource(R.dimen.message_elevation), modifier = Modifier.align(Alignment.BottomCenter).padding(start = dimensionResource(R.dimen.screen_padding), end = dimensionResource(R.dimen.screen_padding), bottom = dimensionResource(R.dimen.bottom_nav_height) + dimensionResource(R.dimen.bottom_nav_margin) + dimensionResource(R.dimen.screen_padding))) { Text(message, modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.screen_padding), vertical = dimensionResource(R.dimen.compact_spacing)), style = MaterialTheme.typography.labelLarge) }
+        if (message != null) Surface(onClick = { onMessageRetry?.invoke() }, enabled = onMessageRetry != null, shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)), tonalElevation = dimensionResource(R.dimen.message_elevation), modifier = Modifier.align(Alignment.BottomCenter).padding(start = dimensionResource(R.dimen.screen_padding), end = dimensionResource(R.dimen.screen_padding), bottom = dimensionResource(R.dimen.bottom_nav_height) + dimensionResource(R.dimen.bottom_nav_margin) + dimensionResource(R.dimen.screen_padding))) { Text(message, modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.screen_padding), vertical = dimensionResource(R.dimen.compact_spacing)), style = MaterialTheme.typography.labelLarge) }
     }
 }
 

@@ -175,7 +175,7 @@ fun SuperiorwallsApp() {
                         composable(AppDestination.Settings.route) { SettingsScreen(settings) }
                         composable(AppDestination.CollectionDetails.route, listOf(navArgument("name") { type = NavType.StringType })) { entry ->
                             val collection = entry.arguments?.getString("name")?.let { name -> collections.firstOrNull { it.name == name } }
-                            if (collection == null) navController.popBackStack() else CollectionWallpapersScreen(collection) { wallpaper -> navController.navigate(detailsRoute(wallpaper.url)) }
+                            if (collection == null) navController.popBackStack() else CollectionWallpapersScreen(collection) { wallpaper -> navController.navigate(detailsRoute(wallpaper.url, collection = collection.name)) }
                         }
                         composable(AppDestination.Details.route, listOf(navArgument("url") { type = NavType.StringType }, navArgument("mode") { type = NavType.StringType; defaultValue = "all" }, navArgument("collection") { type = NavType.StringType; nullable = true; defaultValue = null })) { entry ->
                             val wallpaper = entry.arguments?.getString("url")?.let { url -> wallpapers.firstOrNull { it.url == url } }
