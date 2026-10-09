@@ -1,7 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+}
+
+val signingPropertiesFile = rootProject.file("keystore.properties")
+val signingProperties = Properties().apply {
+    if (signingPropertiesFile.exists()) {
+        signingPropertiesFile.inputStream().use { load(it) }
+    }
 }
 
 android {
@@ -18,20 +27,23 @@ android {
 
     signingConfigs {
         create("release") {
-            val keystoreFile = System.getenv("ANDROID_KEYSTORE_FILE")
-            val keystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
-            val keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+            val keystorePath = signingProperties.getProperty("storeFile")
+                ?.takeIf { it.isNotBlank() }
+                ?: System.getenv("ANDROID_KEYSTORE_FILE")
+            val keystorePassword = signingProperties.getProperty("storePassword")
+                ?.takeIf { it.isNotBlank() }
+                ?: System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            val keyAliasValue = signingProperties.getProperty("keyAlias")
+                ?.takeIf { it.isNotBlank() }
+                ?: System.getenv("ANDROID_KEY_ALIAS")
+            val keyPasswordValue = signingProperties.getProperty("keyPassword")
+                ?.takeIf { it.isNotBlank() }
+                ?: System.getenv("ANDROID_KEY_PASSWORD")
 
-            if (!keystoreFile.isNullOrBlank()) {
-                storeFile = file(keystoreFile)
-            }
-            if (!keystorePassword.isNullOrBlank()) {
-                storePassword = keystorePassword
-                keyPassword = keystorePassword
-            }
-            if (!keyAlias.isNullOrBlank()) {
-                this.keyAlias = keyAlias
-            }
+            if (!keystorePath.isNullOrBlank()) storeFile = rootProject.file(keystorePath)
+            if (!keystorePassword.isNullOrBlank()) storePassword = keystorePassword
+            if (!keyAliasValue.isNullOrBlank()) keyAlias = keyAliasValue
+            if (!keyPasswordValue.isNullOrBlank()) keyPassword = keyPasswordValue
         }
     }
 
